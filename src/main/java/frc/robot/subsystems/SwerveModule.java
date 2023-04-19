@@ -66,6 +66,18 @@ public class SwerveModule extends SubsystemBase {
         return MathUtil.angleModulus(angle);
     }
 
+    public Translation2d getTargetLocalVelocity() {
+        return targetLocalVelocity;
+    }
+
+    public void setTargetSpeed(double speed) {
+        targetLocalVelocity = normalize(targetLocalVelocity).times(speed);
+    }
+
+    public double getTargetSpeed() {
+        return targetLocalVelocity.getNorm();
+    }
+
     @Override
     public void periodic() {
         double currentAngleRadians = getCurrentAngleRadians();

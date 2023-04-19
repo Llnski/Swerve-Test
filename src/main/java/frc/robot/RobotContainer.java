@@ -74,7 +74,6 @@ public class RobotContainer {
       double cwRotationSpeed = driverController.getRightX();
       driveSubsystem.updateVelocity(angleRadians, speed, cwRotationSpeed);
     }, driveSubsystem).schedule();
-    ;
   }
 
   /**

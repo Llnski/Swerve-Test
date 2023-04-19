@@ -61,8 +61,19 @@ public class DriveSubsystem extends SubsystemBase {
     this.velocity = new Translation2d(Math.cos(angleRadians), Math.sin(angleRadians)).times(speed);
     this.cwRotationSpeed = cwRotationSpeed;
 
+    double maxModuleSpeed = Double.NEGATIVE_INFINITY;
+
     for (SwerveModule module : swerveModules) {
       module.updateLocalVelocity(velocity, cwRotationSpeed);
+      maxModuleSpeed = Math.max(maxModuleSpeed, module.getTargetSpeed());
+    }
+
+    // If max module speed (velocity + rotation) is greater than max NEO speed,
+    // then rescale each module speed accordingly
+    if (maxModuleSpeed > DriveConstants.kMaxSpeedMetersPerSecond) {
+      for (SwerveModule module : swerveModules) {
+        module.setTargetSpeed(module.getTargetSpeed() / maxModuleSpeed * DriveConstants.kMaxSpeedMetersPerSecond);
+      }
     }
   }
 
