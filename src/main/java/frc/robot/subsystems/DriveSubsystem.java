@@ -6,6 +6,8 @@ package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -54,8 +56,9 @@ public class DriveSubsystem extends SubsystemBase {
         centerOfRotation);
   }
 
-  public void updateVelocity(double x, double y, double cwRotationSpeed) {
-    this.velocity = new Translation2d(x, y);
+  public void updateVelocity(double angleRadians, double speed, double cwRotationSpeed) {
+    speed = MathUtil.clamp(speed, 0, DriveConstants.kMaxSpeedMetersPerSecond); // Clamp speed
+    this.velocity = new Translation2d(Math.cos(angleRadians), Math.sin(angleRadians)).times(speed);
     this.cwRotationSpeed = cwRotationSpeed;
 
     for (SwerveModule module : swerveModules) {
@@ -71,6 +74,6 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
-
+    // SwerveModules update motors locally
   }
 }

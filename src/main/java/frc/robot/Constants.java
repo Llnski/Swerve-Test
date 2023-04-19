@@ -43,11 +43,19 @@ public final class Constants {
 
   public static class DriveConstants {
     public static final MotorType kMotorType = MotorType.kBrushless;
+
     public static final double kLength = Units.inchesToMeters(28);
     public static final double kWidth = Units.inchesToMeters(28);
+
     public static final Translation2d backLeftPosition = new Translation2d(-kWidth / 2, -kLength / 2);
     public static final Translation2d backRightPosition = new Translation2d(kWidth / 2, -kLength / 2);
     public static final Translation2d frontLeftPosition = new Translation2d(-kWidth / 2, kLength / 2);
     public static final Translation2d frontRightPosition = new Translation2d(kWidth / 2, kLength / 2);
+
+    public static final double kMaxSpeedMetersPerSecond = 1; // TODO: Determine max speed for NEOs
+
+    // Used to get pivot angle from NEO encoders (for now)
+    public static final double kSteeringGearRatio = 1.0 / 7.0; // TODO: Figure out actual gear ratio
+    public static final double kSteeringInitialAngleRadians = Math.PI / 2; // Have initial pivot angle be facing
   }
 }
