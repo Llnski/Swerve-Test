@@ -7,8 +7,8 @@ package frc.robot;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.util.Vector2;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -47,12 +47,12 @@ public final class Constants {
     public static final double kLength = Units.inchesToMeters(28);
     public static final double kWidth = Units.inchesToMeters(28);
 
-    public static final Translation2d backLeftPosition = new Translation2d(-kWidth / 2, -kLength / 2);
-    public static final Translation2d backRightPosition = new Translation2d(kWidth / 2, -kLength / 2);
-    public static final Translation2d frontLeftPosition = new Translation2d(-kWidth / 2, kLength / 2);
-    public static final Translation2d frontRightPosition = new Translation2d(kWidth / 2, kLength / 2);
+    public static final Vector2 backLeftPosition = new Vector2(-kWidth / 2, -kLength / 2);
+    public static final Vector2 backRightPosition = new Vector2(kWidth / 2, -kLength / 2);
+    public static final Vector2 frontLeftPosition = new Vector2(-kWidth / 2, kLength / 2);
+    public static final Vector2 frontRightPosition = new Vector2(kWidth / 2, kLength / 2);
 
-    public static final double kMaxSpeedMetersPerSecond = 1; // TODO: Determine max speed for NEOs
+    public static final double kMaxSpeedMetersPerSecond = 1; // TODO: Determine max possible/desired speed
 
     // Used to get pivot angle from NEO encoders (for now)
     public static final double kSteeringGearRatio = 1.0 / 7.0; // TODO: Figure out actual gear ratio

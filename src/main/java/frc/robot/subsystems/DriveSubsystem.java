@@ -8,11 +8,11 @@ import com.revrobotics.CANSparkMax;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.DriveConstants;
+import frc.robot.util.Vector2;
 import frc.robot.Constants.CANIds;
 
 import static frc.robot.util.TranslationUtils.*;
@@ -20,8 +20,8 @@ import static frc.robot.util.TranslationUtils.*;
 public class DriveSubsystem extends SubsystemBase {
   SwerveModule backLeft, backRight, frontLeft, frontRight;
 
-  Translation2d centerOfRotation = new Translation2d();
-  Translation2d velocity = new Translation2d();
+  Vector2 centerOfRotation = new Vector2(0, 0);
+  Vector2 velocity = new Vector2(0, 0);
   double cwRotationSpeed = 0;
 
   SwerveModule[] swerveModules = new SwerveModule[4];
@@ -57,8 +57,8 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public void updateVelocity(double angleRadians, double speed, double cwRotationSpeed) {
-    speed = MathUtil.clamp(speed, 0, DriveConstants.kMaxSpeedMetersPerSecond); // Clamp speed
-    this.velocity = new Translation2d(Math.cos(angleRadians), Math.sin(angleRadians)).times(speed);
+    double clampedSpeed = MathUtil.clamp(speed, 0, DriveConstants.kMaxSpeedMetersPerSecond); // Clamp speed
+    this.velocity = new Vector2(Math.cos(angleRadians), Math.sin(angleRadians)).times(clampedSpeed);
     this.cwRotationSpeed = cwRotationSpeed;
 
     double maxModuleSpeed = Double.NEGATIVE_INFINITY;
@@ -77,7 +77,7 @@ public class DriveSubsystem extends SubsystemBase {
     }
   }
 
-  public void updateCenterOfRotation(Translation2d centerOfRotation) {
+  public void updateCenterOfRotation(Vector2 centerOfRotation) {
     for (SwerveModule module : swerveModules) {
       module.updateCenterOfRotation(centerOfRotation);
     }

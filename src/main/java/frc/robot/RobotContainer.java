@@ -10,6 +10,7 @@ import frc.robot.commands.Autos;
 import frc.robot.commands.ExampleCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.ExampleSubsystem;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -40,6 +41,17 @@ public class RobotContainer {
   public RobotContainer() {
     // Configure the trigger bindings
     configureBindings();
+
+    // Update drive based on controller
+    new RunCommand(() -> {
+      double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.015);
+      double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.015);
+      double speed = Math.hypot(x, y)
+          * DriveConstants.kMaxSpeedMetersPerSecond;
+      double angleRadians = Math.atan2(y, x);
+      double cwRotationSpeed = driverController.getRightX();
+      driveSubsystem.updateVelocity(angleRadians, speed, cwRotationSpeed);
+    }, driveSubsystem).schedule();
   }
 
   /**
@@ -65,15 +77,6 @@ public class RobotContainer {
     // pressed,
     // cancelling on release.
     driverController.b().whileTrue(exampleSubsystem.exampleMethodCommand());
-
-    new RunCommand(() -> {
-      // Update drive based on controller
-      double speed = Math.hypot(-driverController.getLeftY(), driverController.getRightX())
-          * DriveConstants.kMaxSpeedMetersPerSecond;
-      double angleRadians = Math.atan2(-driverController.getLeftY(), driverController.getRightX());
-      double cwRotationSpeed = driverController.getRightX();
-      driveSubsystem.updateVelocity(angleRadians, speed, cwRotationSpeed);
-    }, driveSubsystem).schedule();
   }
 
   /**
