@@ -30,53 +30,25 @@ public class RobotContainer {
   private final ExampleSubsystem exampleSubsystem = new ExampleSubsystem();
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController driverController = new CommandXboxController(
-      OperatorConstants.kDriverControllerPort);
-
-  private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
   public RobotContainer() {
-    // Configure the trigger bindings
-    configureBindings();
-
     // Update drive based on controller
-    new RunCommand(() -> {
-      double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.015);
-      double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.015);
-      double speed = Math.hypot(x, y)
-          * DriveConstants.kMaxSpeedMetersPerSecond;
-      double angleRadians = Math.atan2(y, x);
-      double cwRotationSpeed = driverController.getRightX();
-      driveSubsystem.updateVelocity(angleRadians, speed, cwRotationSpeed);
-    }, driveSubsystem).schedule();
-  }
 
-  /**
-   * Use this method to define your trigger->command mappings. Triggers can be
-   * created via the
-   * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with
-   * an arbitrary
-   * predicate, or via the named factories in {@link
-   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for
-   * {@link
-   * CommandXboxController
-   * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
-   * PS4} controllers or
-   * {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
-   * joysticks}.
-   */
-  private void configureBindings() {
-    // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-    new Trigger(exampleSubsystem::exampleCondition)
-        .onTrue(new ExampleCommand(exampleSubsystem));
+    // Doesn't run?
 
-    // Schedule `exampleMethodCommand` when the Xbox controller's B button is
-    // pressed,
-    // cancelling on release.
-    driverController.b().whileTrue(exampleSubsystem.exampleMethodCommand());
+    // new RunCommand(() -> {
+    //   double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.015);
+    //   double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.015);
+    //   double speed = Math.hypot(x, y)
+    //       * DriveConstants.kMaxSpeedMetersPerSecond;
+    //   double angleRadians = Math.atan2(y, x);
+    //   double cwRotationSpeed = driverController.getRightX();
+    //   driveSubsystem.updateVelocity(angleRadians, speed, cwRotationSpeed);
+    //   System.out.printf("Driving towards: %.2f %.2f at speed %.2f with rot %.2f\n", x, y, speed, cwRotationSpeed);
+    // }, driveSubsystem).schedule();
   }
 
   /**

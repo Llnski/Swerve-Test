@@ -5,10 +5,12 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.DriveConstants;
@@ -54,6 +56,15 @@ public class DriveSubsystem extends SubsystemBase {
         new CANSparkMax(CANIds.kFrontRightPivot, DriveConstants.kMotorType),
         DriveConstants.frontRightPosition,
         centerOfRotation);
+
+    // swerveModules[3].shouldFlipAngle(true);
+  
+    for (SwerveModule module : swerveModules) {
+      module.setIdleMode(IdleMode.kBrake);
+    }
+
+    System.out.println("Registering swerve modules");
+    CommandScheduler.getInstance().registerSubsystem(swerveModules);
   }
 
   public void updateVelocity(double angleRadians, double speed, double cwRotationSpeed) {
@@ -83,8 +94,18 @@ public class DriveSubsystem extends SubsystemBase {
     }
   }
 
+  public void setIdleMode(IdleMode idleMode) {
+    for (SwerveModule module : swerveModules) {
+      module.setIdleMode(idleMode);
+    }
+  }
+
   @Override
   public void periodic() {
     // SwerveModules update motors locally
+
+    // double backLeftPosition = swerveModules[0].getPivotEncoder().getPosition();
+    // double angleDegrees = Math.toDegrees(swerveModules[0].getCurrentAngleRadians());
+    // System.out.println("Back left position: " + angleDegrees);
   }
 }

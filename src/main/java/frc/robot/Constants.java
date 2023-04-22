@@ -52,10 +52,11 @@ public final class Constants {
     public static final Vector2 frontLeftPosition = new Vector2(-kWidth / 2, kLength / 2);
     public static final Vector2 frontRightPosition = new Vector2(kWidth / 2, kLength / 2);
 
-    public static final double kMaxSpeedMetersPerSecond = 1; // TODO: Determine max possible/desired speed
+    public static final double kMaxSpeedMetersPerSecond = 0.2; // TODO: Determine max possible/desired speed
+
 
     // Used to get pivot angle from NEO encoders (for now)
-    public static final double kSteeringGearRatio = 1.0 / 7.0; // TODO: Figure out actual gear ratio
+    public static final double kSteeringGearRatio = 1/21.665599999999998;
     public static final double kSteeringInitialAngleRadians = Math.PI / 2; // Have initial pivot angle be facing
   }
 }

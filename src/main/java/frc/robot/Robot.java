@@ -4,9 +4,16 @@
 
 package frc.robot;
 
+import com.revrobotics.CANSparkMax.IdleMode;
+
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.DriveSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -18,6 +25,11 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private RobotContainer m_robotContainer;
+
+  private final XboxController driverController = new XboxController(
+      OperatorConstants.kDriverControllerPort);
+
+  private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -81,7 +93,23 @@ public class Robot extends TimedRobot {
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+      double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.015);
+      double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.015);
+      double speed = Math.hypot(x, y)
+          * DriveConstants.kMaxSpeedMetersPerSecond;
+      double angleRadians = (Math.abs(x) > 0 || Math.abs(y) > 0) ? Math.atan2(y, x) : Math.PI / 2;
+      double cwRotationSpeed = MathUtil.applyDeadband(driverController.getRightX(), 0.02);
+      // "CW rotation" is really CCW, todo
+      driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
+      System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
+
+  }
+
+  @Override
+  public void teleopExit() {
+    driveSubsystem.setIdleMode(IdleMode.kCoast);
+  }
 
   @Override
   public void testInit() {
