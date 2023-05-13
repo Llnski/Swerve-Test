@@ -1,5 +1,8 @@
 package frc.robot.subsystems;
 
+import javax.sql.rowset.serial.SerialArray;
+
+import com.ctre.phoenixpro.hardware.CANcoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
@@ -15,7 +18,8 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
-    private CANSparkMax speedMotor, pivotMotor;
+    private CANSparkMax driveMotor, steeringMotor;
+    private CANcoder canCoder;
 
     // Position vectors for updating speed
     private Vector2 position, corToPosition, cwPerpDirection;
@@ -31,8 +35,6 @@ public class SwerveModule extends SubsystemBase {
 
     private boolean shouldFlipAngle = false;
 
-    private boolean shouldNegateSpeed = false;
-
     public void shouldFlipAngle(boolean flipAngle) {
         this.shouldFlipAngle = flipAngle;
     }
@@ -42,28 +44,36 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public void setIdleMode(IdleMode idleMode) {
-        pivotMotor.setIdleMode(idleMode);
-        speedMotor.setIdleMode(idleMode);
+        steeringMotor.setIdleMode(idleMode);
+        driveMotor.setIdleMode(idleMode);
     }
 
-    public SwerveModule(CANSparkMax speedMotor, CANSparkMax pivotMotor, Vector2 position,
-            Vector2 centerOfRotation) {
-        this.speedMotor = speedMotor;
-        this.pivotMotor = pivotMotor;
+    public SwerveModule(SwerveModuleBuilder builder) {
+        this(builder.steeringMotor,
+            builder.driveMotor,
+            builder.canCoder,
+            builder.position,
+            builder.centerOfRotation);
+    }
 
-        this.speedMotor.restoreFactoryDefaults();
-        this.pivotMotor.restoreFactoryDefaults();
-        
-        this.velocityController = speedMotor.getPIDController();
+    public SwerveModule(CANSparkMax steeringMotor, CANSparkMax driveMotor, CANcoder canCoder, Vector2 position,
+            Vector2 centerOfRotation) {
+        this.driveMotor = driveMotor;
+        this.steeringMotor = steeringMotor;
+        this.canCoder = canCoder;
+
+        this.driveMotor.restoreFactoryDefaults();
+        this.steeringMotor.restoreFactoryDefaults();
+
+        this.velocityController = driveMotor.getPIDController();
         this.velocityController.setP(0.01);
 
-        this.pivotEncoder = pivotMotor.getEncoder();
+        this.pivotEncoder = steeringMotor.getEncoder();
         this.pivotEncoder.setPosition(0); // Zero position
 
         this.position = position;
         this.corToPosition = position.minus(centerOfRotation);
         this.cwPerpDirection = corToPosition.normalize().cwPerp();
-
 
         // Continuous across angles (degrees)
         this.pivotController.enableContinuousInput(-180, 180);
@@ -92,6 +102,7 @@ public class SwerveModule extends SubsystemBase {
         double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() * DriveConstants.kSteeringGearRatio * 2 * Math.PI
                 + DriveConstants.kSteeringInitialAngleRadians;
         double moddedAngle = MathUtil.angleModulus(angle);
+        canCoder.getAbsolutePosition().getValue()
         return moddedAngle;
     }
 
@@ -116,13 +127,56 @@ public class SwerveModule extends SubsystemBase {
         double speed = Math.cos(currentAngleRadians) * targetLocalVelocity.getX()
                 + Math.sin(currentAngleRadians) * targetLocalVelocity.getY();
         // velocityController.setReference(speed, ControlType.kVelocity);
-        speedMotor.set(speed); // TODO: Use velocity
+        driveMotor.set(speed); // TODO: Use velocity
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);
         double pivotOutput = pivotController.calculate(currentAngleDegrees);
-        pivotMotor.set(pivotOutput);
+        steeringMotor.set(pivotOutput);
 
         // System.out.print("Target local velocity: " + targetLocalVelocity.toString());
+    }
+
+    public static class SwerveModuleBuilder {
+        CANSparkMax steeringMotor = null, driveMotor = null;
+        CANcoder canCoder = null;
+        Vector2 position = null, centerOfRotation = null;
+
+        public SwerveModuleBuilder setSteeringMotor(CANSparkMax steeringMotor) {
+            this.steeringMotor = steeringMotor;
+            return this;
+        }
+
+        public SwerveModuleBuilder setDriveMotor(CANSparkMax driveMotor) {
+            this.driveMotor = driveMotor;
+            return this;
+        }
+
+        public SwerveModuleBuilder setCanCoder(CANcoder canCoder) {
+            this.canCoder = canCoder;
+            return this;
+        }
+
+        public SwerveModuleBuilder setPosition(Vector2 position) {
+            this.position = position;
+            return this;
+        }
+
+        public SwerveModuleBuilder setCenterOfRotation(Vector2 centerOfRotation) {
+            this.centerOfRotation = centerOfRotation;
+            return this;
+        }
+
+        public SwerveModule build() {
+            if (steeringMotor == null
+                || driveMotor == null
+                || canCoder == null
+                || position == null
+                || centerOfRotation == null
+            ) {
+                throw new IllegalArgumentException("SwerveModuleBuilder: Tried to build SwerveModule with incomplete parameters");
+            }
+            return new SwerveModule(this);
+        }
     }
 }

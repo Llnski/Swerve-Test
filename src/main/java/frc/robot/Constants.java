@@ -24,17 +24,25 @@ import frc.robot.util.Vector2;
  */
 public final class Constants {
   public static class CANIds {
-    public static final int kBackLeftPivot = 5;
-    public static final int kBackLeftSpeed = 6;
+    // Module 1 (Front-right)
+    public static final int kMod1CANCoder = 10;
+    public static final int kMod1SteeringMotor = 11;
+    public static final int kMod1DriveMotor = 12;
 
-    public static final int kBackRightPivot = 7;
-    public static final int kBackRightSpeed = 8;
+    // Module 2 (Front-left)
+    public static final int kMod2CANCoder = 20;
+    public static final int kMod2SteeringMotor = 21;
+    public static final int kMod2DriveMotor = 22;
 
-    public static final int kFrontLeftPivot = 9;
-    public static final int kFrontLeftSpeed = 10;
+    // Module 3 (Back-left)
+    public static final int kMod3CANCoder = 30;
+    public static final int kMod3SteeringMotor = 31;
+    public static final int kMod3DriveMotor = 32;
 
-    public static final int kFrontRightPivot = 11;
-    public static final int kFrontRightSpeed = 12;
+    // Module 4 (Back-right)
+    public static final int kMod4CANCoder = 40;
+    public static final int kMod4SteeringMotor = 41;
+    public static final int kMod4DriveMotor = 42;
   }
 
   public static class OperatorConstants {
@@ -47,10 +55,10 @@ public final class Constants {
     public static final double kLength = Units.inchesToMeters(28);
     public static final double kWidth = Units.inchesToMeters(28);
 
-    public static final Vector2 backLeftPosition = new Vector2(-kWidth / 2, -kLength / 2);
-    public static final Vector2 backRightPosition = new Vector2(kWidth / 2, -kLength / 2);
-    public static final Vector2 frontLeftPosition = new Vector2(-kWidth / 2, kLength / 2);
-    public static final Vector2 frontRightPosition = new Vector2(kWidth / 2, kLength / 2);
+    public static final Vector2 kMod1Position = new Vector2(kWidth / 2, kLength / 2);
+    public static final Vector2 kMod2Position = new Vector2(-kWidth / 2, kLength / 2);
+    public static final Vector2 kMod3Position = new Vector2(-kWidth / 2, -kLength / 2);
+    public static final Vector2 kMod4Position = new Vector2(kWidth / 2, -kLength / 2);
 
     public static final double kMaxSpeedMetersPerSecond = 0.2; // TODO: Determine max possible/desired speed
 
