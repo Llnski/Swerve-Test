@@ -37,8 +37,6 @@ public class RobotContainer {
   public RobotContainer() {
     // Update drive based on controller
 
-    // Doesn't run?
-
     // new RunCommand(() -> {
     //   double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.015);
     //   double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.015);

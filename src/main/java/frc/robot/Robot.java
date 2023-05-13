@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.ctre.phoenixpro.configs.CANcoderConfiguration;
+import com.ctre.phoenixpro.hardware.CANcoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
@@ -31,6 +33,8 @@ public class Robot extends TimedRobot {
 
   private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
+  CANcoder canCoder1;
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -40,6 +44,12 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
+    // canCoder1 = new CANcoder(30, "rio");
+    // var config = new CANcoderConfiguration();
+    // canCoder1.getConfigurator().apply(config);
+    // canCoder1.getPosition().setUpdateFrequency(100);
+    // canCoder1.getVelocity().setUpdateFrequency(100);
+    driveSubsystem.setIdleMode(IdleMode.kCoast);
   }
 
   /**
@@ -55,6 +65,7 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
+
     CommandScheduler.getInstance().run();
   }
 
@@ -89,21 +100,37 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    driveSubsystem.setIdleMode(IdleMode.kBrake);
+
+    driveSubsystem.swerveModule1.pivotEncoder.setPosition(0);
+    driveSubsystem.swerveModule2.pivotEncoder.setPosition(0);
+    driveSubsystem.swerveModule3.pivotEncoder.setPosition(0);
+    driveSubsystem.swerveModule4.pivotEncoder.setPosition(0);
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-      double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.015);
-      double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.015);
+      double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.035);
+      double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.035);
       double speed = Math.hypot(x, y)
           * DriveConstants.kMaxSpeedMetersPerSecond;
       double angleRadians = (Math.abs(x) > 0 || Math.abs(y) > 0) ? Math.atan2(y, x) : Math.PI / 2;
-      double cwRotationSpeed = MathUtil.applyDeadband(driverController.getRightX(), 0.02);
+      double cwRotationSpeed = MathUtil.applyDeadband(driverController.getRightX(), 0.03);
       // "CW rotation" is really CCW, todo
       driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
       System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
 
+      // double position1 = driveSubsystem.swerveModule1.canCoder.getPosition().getValue();
+      // double position2 = driveSubsystem.swerveModule2.canCoder.getPosition().getValue();
+      // double position3 = driveSubsystem.swerveModule3.canCoder.getPosition().getValue();
+      // double position4 = driveSubsystem.swerveModule4.canCoder.getPosition().getValue();
+
+
+      // System.out.printf("Pos 1: %.3f. Pos 2: %.3f. Pos 3: %.3f. Pos 4: %.3f\n", position1, position2, position3, position4);
+      // var position = canCoder1.getPosition();
+      // System.out.printf("Pos 1: %.5f. Latency: %.3f\n", position.getValue(), position.getTimestamp().getLatency());
   }
 
   @Override
@@ -115,6 +142,14 @@ public class Robot extends TimedRobot {
   public void testInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
+
+    // driveSubsystem.swerveModule1.canCoder.setPosition(0);
+    // driveSubsystem.swerveModule2.canCoder.setPosition(0);
+    // driveSubsystem.swerveModule3.canCoder.setPosition(0);
+    // driveSubsystem.swerveModule4.canCoder.setPosition(0);
+    canCoder1.setPosition(0.4);
+    canCoder1.getPosition().waitForUpdate(0.1);
+    System.out.println("Zeroed all CANCoders.");
   }
 
   /** This function is called periodically during test mode. */
