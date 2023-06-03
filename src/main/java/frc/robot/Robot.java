@@ -4,8 +4,8 @@
 
 package frc.robot;
 
-import com.ctre.phoenixpro.configs.CANcoderConfiguration;
-import com.ctre.phoenixpro.hardware.CANcoder;
+import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
@@ -33,7 +33,7 @@ public class Robot extends TimedRobot {
 
   private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
-  CANcoder canCoder1;
+  CANCoder canCoder1;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -44,12 +44,7 @@ public class Robot extends TimedRobot {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
-    // canCoder1 = new CANcoder(30, "rio");
-    // var config = new CANcoderConfiguration();
-    // canCoder1.getConfigurator().apply(config);
-    // canCoder1.getPosition().setUpdateFrequency(100);
-    // canCoder1.getVelocity().setUpdateFrequency(100);
-    driveSubsystem.setIdleMode(IdleMode.kCoast);
+    driveSubsystem.setIdleMode(IdleMode.kCoast, IdleMode.kCoast);
   }
 
   /**
@@ -101,12 +96,7 @@ public class Robot extends TimedRobot {
       m_autonomousCommand.cancel();
     }
 
-    driveSubsystem.setIdleMode(IdleMode.kBrake);
-
-    driveSubsystem.swerveModule1.pivotEncoder.setPosition(0);
-    driveSubsystem.swerveModule2.pivotEncoder.setPosition(0);
-    driveSubsystem.swerveModule3.pivotEncoder.setPosition(0);
-    driveSubsystem.swerveModule4.pivotEncoder.setPosition(0);
+    driveSubsystem.setIdleMode(IdleMode.kBrake, IdleMode.kBrake);
   }
 
   /** This function is called periodically during operator control. */
@@ -116,16 +106,11 @@ public class Robot extends TimedRobot {
       double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.035);
       double speed = Math.hypot(x, y)
           * DriveConstants.kMaxSpeedMetersPerSecond;
-      double angleRadians = (Math.abs(x) > 0 || Math.abs(y) > 0) ? Math.atan2(y, x) : Math.PI / 2;
+      double angleRadians = (Math.abs(x) > 1e-6 || Math.abs(y) > 1e-6) ? Math.atan2(y, x) : Math.PI / 2;
       double cwRotationSpeed = MathUtil.applyDeadband(driverController.getRightX(), 0.03);
       // "CW rotation" is really CCW, todo
       driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
       System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
-
-      // double position1 = driveSubsystem.swerveModule1.canCoder.getPosition().getValue();
-      // double position2 = driveSubsystem.swerveModule2.canCoder.getPosition().getValue();
-      // double position3 = driveSubsystem.swerveModule3.canCoder.getPosition().getValue();
-      // double position4 = driveSubsystem.swerveModule4.canCoder.getPosition().getValue();
 
 
       // System.out.printf("Pos 1: %.3f. Pos 2: %.3f. Pos 3: %.3f. Pos 4: %.3f\n", position1, position2, position3, position4);
@@ -135,7 +120,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopExit() {
-    driveSubsystem.setIdleMode(IdleMode.kCoast);
+    driveSubsystem.setIdleMode(IdleMode.kCoast, IdleMode.kCoast);
   }
 
   @Override
@@ -143,18 +128,27 @@ public class Robot extends TimedRobot {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
 
-    // driveSubsystem.swerveModule1.canCoder.setPosition(0);
-    // driveSubsystem.swerveModule2.canCoder.setPosition(0);
-    // driveSubsystem.swerveModule3.canCoder.setPosition(0);
-    // driveSubsystem.swerveModule4.canCoder.setPosition(0);
-    canCoder1.setPosition(0.4);
-    canCoder1.getPosition().waitForUpdate(0.1);
-    System.out.println("Zeroed all CANCoders.");
+    // canCoder1.setPosition(0.4);
+    // canCoder1.getPosition().waitForUpdate(0.1);
+    // System.out.println("Zeroed all CANCoders.");
   }
 
   /** This function is called periodically during test mode. */
   @Override
-  public void testPeriodic() {}
+  public void testPeriodic() {
+
+    // var position = canCoder1.getAbsolutePosition();
+    // System.out.printf("CANCoder 30: %.2f\n", position);
+
+    double position1 = Math.toDegrees(driveSubsystem.swerveModule1.getCurrentAngleRadians());
+    double position2 = Math.toDegrees(driveSubsystem.swerveModule2.getCurrentAngleRadians());
+    double position3 = Math.toDegrees(driveSubsystem.swerveModule3.getCurrentAngleRadians());
+    double position4 = Math.toDegrees(driveSubsystem.swerveModule4.getCurrentAngleRadians());
+
+
+    System.out.printf("Pos 1: %.5f. Pos 2: %.5f. Pos 3: %.5f. Pos 4: %.5f\n", position1, position2, position3, position4);
+
+  }
 
   /** This function is called once when the robot is first started up. */
   @Override

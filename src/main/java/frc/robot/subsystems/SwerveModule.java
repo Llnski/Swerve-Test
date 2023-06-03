@@ -2,8 +2,7 @@ package frc.robot.subsystems;
 
 import javax.sql.rowset.serial.SerialArray;
 
-import com.ctre.phoenixpro.configs.CANcoderConfiguration;
-import com.ctre.phoenixpro.hardware.CANcoder;
+import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
@@ -21,21 +20,24 @@ import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
     private CANSparkMax driveMotor, steeringMotor;
-    public CANcoder canCoder;
+    public CANCoder CANCoder;
 
     // Position vectors for updating speed
     private Vector2 position, corToPosition, cwPerpDirection;
 
     private Vector2 targetLocalVelocity = new Vector2(0, 0);
 
-    private PIDController pivotController = new PIDController(0.0045, 0.0008, 0);
+    private PIDController pivotController = new PIDController(0.005, 0.0, 0.0);
     private SparkMaxPIDController velocityController;
 
     public RelativeEncoder pivotEncoder;
 
     private double rotationSpeed = 0;
+    private double CANCoderAngleOffset;
 
     private boolean shouldFlipAngle = false;
+
+    private String name;
 
     public void shouldFlipAngle(boolean flipAngle) {
         this.shouldFlipAngle = flipAngle;
@@ -45,20 +47,22 @@ public class SwerveModule extends SubsystemBase {
         return pivotEncoder;
     }
 
-    public void setIdleMode(IdleMode idleMode) {
-        steeringMotor.setIdleMode(idleMode);
-        driveMotor.setIdleMode(idleMode);
+    public void setIdleMode(IdleMode driveIdleMode, IdleMode steeringIdleMode) {
+        driveMotor.setIdleMode(driveIdleMode);
+        steeringMotor.setIdleMode(steeringIdleMode);
     }
 
-    public SwerveModule(CANSparkMax steeringMotor, CANSparkMax driveMotor, CANcoder canCoder, Vector2 position,
-            Vector2 centerOfRotation) {
+    public SwerveModule(String name, CANSparkMax steeringMotor, CANSparkMax driveMotor, CANCoder CANCoder, Vector2 position,
+            Vector2 centerOfRotation, double CANCoderAngleOffset) {
+        this.name = name;
         this.driveMotor = driveMotor;
         this.steeringMotor = steeringMotor;
-        this.canCoder = canCoder;
+        this.CANCoder = CANCoder;
+        this.CANCoderAngleOffset = CANCoderAngleOffset;
 
         this.driveMotor.restoreFactoryDefaults();
         this.steeringMotor.restoreFactoryDefaults();
-        
+
         this.velocityController = driveMotor.getPIDController();
         this.velocityController.setP(0.01);
 
@@ -71,18 +75,22 @@ public class SwerveModule extends SubsystemBase {
 
         // Continuous across angles (degrees)
         this.pivotController.enableContinuousInput(-180, 180);
+        // If within 0.5 degrees, don't care about velocity
+        this.pivotController.setTolerance(5.0, Double.POSITIVE_INFINITY);
     }
 
     public void updateLocalVelocity(Vector2 targetChassisVelocity, double rotationSpeed) {
         this.rotationSpeed = rotationSpeed;
         targetLocalVelocity = targetChassisVelocity.plus(cwPerpDirection.times(rotationSpeed));
+        System.out.println("Mod " + name + ": CW Perp Direction: " + cwPerpDirection);
 
+        // TODO: Clean up
         double currentAngle = getCurrentAngleRadians();
+        // double targetAngleRadians = Math.abs(targetChassisVelocity.getX()) > 1e-6
+        //         && Math.abs(targetChassisVelocity.getY()) > 1e-6
+        //                 ? Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX())
+        //                 : Math.PI / 2.0;
         double targetAngleRadians = Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX());
-        if (Math.abs(currentAngle - targetAngleRadians) > Math.PI / 2) {
-            // targetLocalVelocity = targetLocalVelocity.unaryMinus();
-            // targetAngleRadians = -targetAngleRadians;
-        }
 
         this.pivotController.setSetpoint(Math.toDegrees(targetAngleRadians));
     }
@@ -93,11 +101,14 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public double getCurrentAngleRadians() {
+        double angle = Math.toRadians(-(CANCoder.getAbsolutePosition() - CANCoderAngleOffset));
+        return angle;
         // return canCoder.getAbsolutePosition().getValue();
-        double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() * DriveConstants.kSteeringGearRatio * 2 * Math.PI
-                + DriveConstants.kSteeringInitialAngleRadians;
-        double moddedAngle = MathUtil.angleModulus(angle);
-        return moddedAngle;
+        // double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
+        // DriveConstants.kSteeringGearRatio * 2 * Math.PI
+        // + DriveConstants.kSteeringInitialAngleRadians;
+        // double moddedAngle = MathUtil.angleModulus(angle);
+        // return moddedAngle;
     }
 
     public Vector2 getTargetLocalVelocity() {
@@ -121,20 +132,33 @@ public class SwerveModule extends SubsystemBase {
         double speed = Math.cos(currentAngleRadians) * targetLocalVelocity.getX()
                 + Math.sin(currentAngleRadians) * targetLocalVelocity.getY();
         // velocityController.setReference(speed, ControlType.kVelocity);
+        if (speed < 0.0) {
+            System.out.println("Mod " + name + ": Going backwards");
+        }
         driveMotor.set(MathUtil.clamp(speed, -0.1, 0.1)); // TODO: Use velocity
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);
         double pivotOutput = pivotController.calculate(currentAngleDegrees);
+        // atSetpoint() doesn't work?
         steeringMotor.set(pivotOutput);
 
-        // System.out.print("Target local velocity: " + targetLocalVelocity.toString());
+        // System.out.printf("Target angle: %.2f; current angle: %.2f; error %.2f.  ", currentAngleDegrees, pivotController.getSetpoint(), pivotController.getPositionError());
+        // System.out.print("Target local velocity: " + targetLocalVelocity.toString() + "; ");
     }
 
     public static class SwerveModuleBuilder {
         CANSparkMax steeringMotor = null, driveMotor = null;
-        CANcoder canCoder = null;
+        CANCoder canCoder = null;
         Vector2 position = null, centerOfRotation = null;
+        Double CANCoderOffset = null;
+        String name = "";
+
+        SwerveModuleBuilder(String name) {
+            this.name = name;
+        }
+
+        SwerveModuleBuilder() {}
 
         public SwerveModuleBuilder setSteeringMotorId(int id) {
             this.steeringMotor = new CANSparkMax(id, MotorType.kBrushless);
@@ -147,8 +171,8 @@ public class SwerveModule extends SubsystemBase {
         }
 
         public SwerveModuleBuilder setCanCoderId(int id) {
-            this.canCoder = new CANcoder(id);
-            this.canCoder.getPosition().setUpdateFrequency(100);
+            this.canCoder = new CANCoder(id);
+            // this.canCoder.getPosition().setUpdateFrequency(100);
             return this;
         }
 
@@ -162,6 +186,11 @@ public class SwerveModule extends SubsystemBase {
             return this;
         }
 
+        public SwerveModuleBuilder setCANCoderOffset(double offset) {
+            this.CANCoderOffset = offset;
+            return this;
+        }
+
         public SwerveModule build() {
             // TODO: Maybe this should be handled in
             // SwerveModule? Good enough for now
@@ -169,14 +198,16 @@ public class SwerveModule extends SubsystemBase {
                     || driveMotor == null
                     || canCoder == null
                     || position == null
-                    || centerOfRotation == null) {
+                    || centerOfRotation == null
+                    || CANCoderOffset == null) {
                 throw new IllegalArgumentException("Tried to build SwerveModule with incomplete parameters");
             }
-            return new SwerveModule(steeringMotor,
+            return new SwerveModule(name,
+                    steeringMotor,
                     driveMotor,
                     canCoder,
                     position,
-                    centerOfRotation);
+                    centerOfRotation, CANCoderOffset);
         }
     }
 }

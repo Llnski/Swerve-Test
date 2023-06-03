@@ -4,22 +4,15 @@
 
 package frc.robot.subsystems;
 
-import com.ctre.phoenixpro.hardware.CANcoder;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.SwerveModule.SwerveModuleBuilder;
 import frc.robot.util.Vector2;
 import frc.robot.Constants.CANIds;
-
-import static frc.robot.util.TranslationUtils.*;
 
 public class DriveSubsystem extends SubsystemBase {
   SwerveModule backLeft, backRight, frontLeft, frontRight;
@@ -32,35 +25,39 @@ public class DriveSubsystem extends SubsystemBase {
   SwerveModule[] swerveModules = new SwerveModule[4];
 
   public DriveSubsystem() {
-    swerveModule1 = new SwerveModuleBuilder()
+    swerveModule1 = new SwerveModuleBuilder("1")
         .setSteeringMotorId(CANIds.kMod1SteeringMotor)
         .setDriveMotorId(CANIds.kMod1DriveMotor)
         .setCanCoderId(CANIds.kMod1CANCoder)
         .setPosition(DriveConstants.kMod1Position)
         .setCenterOfRotation(centerOfRotation)
+        .setCANCoderOffset(DriveConstants.kMod1CANCoderOffset)
         .build();
 
-    swerveModule2 = new SwerveModuleBuilder()
+    swerveModule2 = new SwerveModuleBuilder("2")
         .setSteeringMotorId(CANIds.kMod2SteeringMotor)
         .setDriveMotorId(CANIds.kMod2DriveMotor)
         .setCanCoderId(CANIds.kMod2CANCoder)
         .setPosition(DriveConstants.kMod2Position)
         .setCenterOfRotation(centerOfRotation)
+        .setCANCoderOffset(DriveConstants.kMod2CANCoderOffset)
         .build();
 
-    swerveModule3 = new SwerveModuleBuilder()
+    swerveModule3 = new SwerveModuleBuilder("3")
         .setSteeringMotorId(CANIds.kMod3SteeringMotor)
         .setDriveMotorId(CANIds.kMod3DriveMotor)
         .setCanCoderId(CANIds.kMod3CANCoder)
         .setPosition(DriveConstants.kMod3Position)
+        .setCANCoderOffset(DriveConstants.kMod3CANCoderOffset)
         .setCenterOfRotation(centerOfRotation)
         .build();
 
-    swerveModule4 = new SwerveModuleBuilder()
+    swerveModule4 = new SwerveModuleBuilder("4")
         .setSteeringMotorId(CANIds.kMod4SteeringMotor)
         .setDriveMotorId(CANIds.kMod4DriveMotor)
         .setCanCoderId(CANIds.kMod4CANCoder)
         .setPosition(DriveConstants.kMod4Position)
+        .setCANCoderOffset(DriveConstants.kMod4CANCoderOffset)
         .setCenterOfRotation(centerOfRotation)
         .build();
 
@@ -70,7 +67,7 @@ public class DriveSubsystem extends SubsystemBase {
     swerveModules[3] = swerveModule4;
 
     for (SwerveModule module : swerveModules) {
-      module.setIdleMode(IdleMode.kBrake);
+      module.setIdleMode(IdleMode.kBrake, IdleMode.kBrake);
     }
 
     System.out.println("Registering swerve modules");
@@ -104,9 +101,9 @@ public class DriveSubsystem extends SubsystemBase {
     }
   }
 
-  public void setIdleMode(IdleMode idleMode) {
+  public void setIdleMode(IdleMode driveIdleMode, IdleMode steeringIdleMode) {
     for (SwerveModule module : swerveModules) {
-      module.setIdleMode(idleMode);
+      module.setIdleMode(driveIdleMode, steeringIdleMode);
     }
   }
 

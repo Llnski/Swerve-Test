@@ -56,9 +56,14 @@ public final class Constants {
     public static final double kWidth = Units.inchesToMeters(28);
 
     public static final Vector2 kMod1Position = new Vector2(kWidth / 2, kLength / 2);
-    public static final Vector2 kMod2Position = new Vector2(-kWidth / 2, kLength / 2);
+    public static final Vector2 kMod2Position = new Vector2(-kWidth / 2, kLength / 2).unaryMinus();
     public static final Vector2 kMod3Position = new Vector2(-kWidth / 2, -kLength / 2);
-    public static final Vector2 kMod4Position = new Vector2(kWidth / 2, -kLength / 2);
+    public static final Vector2 kMod4Position = new Vector2(kWidth / 2, -kLength / 2).unaryMinus();
+
+    public static final double kMod1CANCoderOffset = 49.83398;
+    public static final double kMod2CANCoderOffset = -134.20898;
+    public static final double kMod3CANCoderOffset = -71.10352;
+    public static final double kMod4CANCoderOffset = 0.87891;
 
     public static final double kMaxSpeedMetersPerSecond = 0.2; // TODO: Determine max possible/desired speed
 
