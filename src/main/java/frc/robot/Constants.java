@@ -70,6 +70,6 @@ public final class Constants {
 
     // Used to get pivot angle from NEO encoders (for now)
     public static final double kSteeringGearRatio = 1/21.665599999999998;
-    public static final double kSteeringInitialAngleRadians = Math.PI / 2; // Have initial pivot angle be facing
+    public static final double kSteeringInitialAngleRadians = 0;
   }
 }
