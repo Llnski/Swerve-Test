@@ -3,6 +3,10 @@ package frc.robot.util;
 public class Vector2 {
     private double x, y;
 
+    public Vector2() {
+        this(0, 0);
+    }
+
     public Vector2(double x, double y) {
         this.x = x;
         this.y = y;
@@ -51,6 +55,11 @@ public class Vector2 {
 
     public double dot(Vector2 other) {
         return x * other.x + y * other.y;
+    }
+
+    public void set(Vector2 other) {
+        this.x = other.getX();
+        this.y = other.getY();
     }
 
     public double norm() {

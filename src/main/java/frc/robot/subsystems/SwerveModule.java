@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import javax.sql.rowset.serial.SerialArray;
-
 import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -15,6 +13,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.util.Vector2;
 
@@ -31,6 +30,9 @@ public class SwerveModule extends SubsystemBase {
     private SparkMaxPIDController velocityController;
 
     public RelativeEncoder pivotEncoder;
+    public RelativeEncoder driveEncoder;
+
+    private Vector2 fieldPosition;
 
     private double rotationSpeed = 0;
     private double CANCoderAngleOffset;
@@ -38,6 +40,10 @@ public class SwerveModule extends SubsystemBase {
     private boolean shouldFlipAngle = false;
 
     private String name;
+
+    public Vector2 getFieldPosition() {
+        return this.fieldPosition;
+    }
 
     public void shouldFlipAngle(boolean flipAngle) {
         this.shouldFlipAngle = flipAngle;
@@ -60,6 +66,8 @@ public class SwerveModule extends SubsystemBase {
         this.CANCoder = CANCoder;
         this.CANCoderAngleOffset = CANCoderAngleOffset;
 
+        this.driveEncoder = this.driveMotor.getEncoder();
+
         this.driveMotor.restoreFactoryDefaults();
         this.steeringMotor.restoreFactoryDefaults();
 
@@ -70,6 +78,10 @@ public class SwerveModule extends SubsystemBase {
         this.pivotEncoder.setPosition(0); // Zero position
 
         this.position = position;
+
+        // TODO: Clean this up, use Pose2d/PoseEstimator
+        this.fieldPosition.set(position); // Add starting chassis position
+        
         this.corToPosition = position.minus(centerOfRotation);
         this.cwPerpDirection = corToPosition.normalize().cwPerp();
 
@@ -126,6 +138,14 @@ public class SwerveModule extends SubsystemBase {
     @Override
     public void periodic() {
         double currentAngleRadians = getCurrentAngleRadians();
+
+        double wheelPosition = driveEncoder.getPosition() * Constants.DriveConstants.kDriveGearRatio;
+
+        double changeX = Math.cos(currentAngleRadians)*wheelPosition;
+        double changeY = Math.sin(currentAngleRadians)*wheelPosition;
+
+        Vector2 changeVector = new Vector2(changeX,changeY);
+        fieldPosition.plus(changeVector);
 
         // Update motor velocity based on dot product between
         // current heading and target local velocity
