@@ -107,6 +107,14 @@ public class DriveSubsystem extends SubsystemBase {
     }
   }
 
+  public Vector2 getPosition() {
+    Vector2 total = new Vector2();
+    for (SwerveModule sm : swerveModules) {
+      total.plus(sm.getFieldPosition());
+    }
+    return total.div(4);
+  }
+
   @Override
   public void periodic() {
     // SwerveModules update motors locally

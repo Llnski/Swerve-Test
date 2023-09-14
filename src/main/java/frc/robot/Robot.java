@@ -9,13 +9,17 @@ import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants.SquareTest;
 import frc.robot.subsystems.DriveSubsystem;
 
 /**
@@ -36,9 +40,10 @@ public class Robot extends TimedRobot {
 
   CANCoder canCoder1;
 
-  private void initSmartDashboard() {
-      // TODO: Custom Dashboard
-  }
+  private final ShuffleboardTab tab = Shuffleboard.getTab("Swerve Test");
+  private final GenericEntry velocityKP = tab.add("kP", DriveConstants.kDriveVelocityP).getEntry();
+  private final GenericEntry velocityKI = tab.add("kI", DriveConstants.kDriveVelocityI).getEntry();
+  private final GenericEntry velocityKD = tab.add("kD", DriveConstants.kDriveVelocityD).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -50,8 +55,6 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
     driveSubsystem.setIdleMode(IdleMode.kCoast, IdleMode.kCoast);
-
-    initSmartDashboard();
   }
 
   /**
@@ -69,6 +72,10 @@ public class Robot extends TimedRobot {
     // block in order for anything in the Command-based framework to work.
 
     CommandScheduler.getInstance().run();
+
+    DriveConstants.kDriveVelocityP = velocityKP.getDouble(0.0);
+    DriveConstants.kDriveVelocityI = velocityKI.getDouble(0.0);
+    DriveConstants.kDriveVelocityD = velocityKD.getDouble(0.0);
   }
 
   /** This function is called once each time the robot enters Disabled mode. */
@@ -148,7 +155,7 @@ public class Robot extends TimedRobot {
 
     // var position = canCoder1.getAbsolutePosition();
     // System.out.printf("CANCoder 30: %.2f\n", position);
-
+    /* 
     double position1 = Math.toDegrees(driveSubsystem.swerveModule1.getCurrentAngleRadians());
     double position2 = Math.toDegrees(driveSubsystem.swerveModule2.getCurrentAngleRadians());
     double position3 = Math.toDegrees(driveSubsystem.swerveModule3.getCurrentAngleRadians());
@@ -156,7 +163,27 @@ public class Robot extends TimedRobot {
 
 
     System.out.printf("Pos 1: %.5f. Pos 2: %.5f. Pos 3: %.5f. Pos 4: %.5f\n", position1, position2, position3, position4);
+    */
+    int currSide = 0;
 
+    
+    // double x = driveSubsystem.getPosition().getX();
+    // double y = driveSubsystem.getPosition().getY();
+    // double desiredX = Constants.SquareTest.xLoc[currSide];
+    // double desiredY = Constants.SquareTest.yLoc[currSide];
+    // if (desiredX-x<=Constants.SquareTest.threshold && desiredY-y<=Constants.SquareTest.threshold) {
+    //   currSide++;
+    // }
+    // else {
+      
+    //   double speed = 0.1 * DriveConstants.kMaxSpeedMetersPerSecond;
+    //   double angleRadians = Math.atan2(desiredY-y,desiredX-x);
+    //   double cwRotationSpeed = 0;
+    //   // "CW rotation" is really CCW, todo
+    //   driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
+    //   System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
+    // }
+    
   }
 
   /** This function is called once when the robot is first started up. */

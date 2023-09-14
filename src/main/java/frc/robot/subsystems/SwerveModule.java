@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import javax.sql.rowset.serial.SerialArray;
-
 import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
@@ -16,13 +14,15 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.util.ShuffleBoardManager;
 import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
     private CANSparkMax driveMotor, steeringMotor;
     public CANCoder CANCoder;
+
+    private SparkMaxPIDController driveMotorController;
 
     // Position vectors for updating speed
     private Vector2 position, corToPosition, cwPerpDirection;
@@ -33,6 +33,9 @@ public class SwerveModule extends SubsystemBase {
     private SparkMaxPIDController velocityController;
 
     public RelativeEncoder pivotEncoder;
+    public RelativeEncoder driveEncoder;
+
+    private Vector2 fieldPosition;
 
     private double rotationSpeed = 0;
     private double CANCoderAngleOffset;
@@ -43,6 +46,10 @@ public class SwerveModule extends SubsystemBase {
 
     public double getPositionError() {
         return pivotController.getPositionError();
+    }
+
+    public Vector2 getFieldPosition() {
+        return this.fieldPosition;
     }
 
     public void shouldFlipAngle(boolean flipAngle) {
@@ -62,9 +69,13 @@ public class SwerveModule extends SubsystemBase {
             Vector2 centerOfRotation, double CANCoderAngleOffset) {
         this.name = name;
         this.driveMotor = driveMotor;
+        this.driveMotorController = driveMotor.getPIDController();
+
         this.steeringMotor = steeringMotor;
         this.CANCoder = CANCoder;
         this.CANCoderAngleOffset = CANCoderAngleOffset;
+
+        this.driveEncoder = this.driveMotor.getEncoder();
 
         this.driveMotor.restoreFactoryDefaults();
         this.steeringMotor.restoreFactoryDefaults();
@@ -76,6 +87,7 @@ public class SwerveModule extends SubsystemBase {
         this.pivotEncoder.setPosition(0); // Zero position
 
         this.position = position;
+        
         this.corToPosition = position.minus(centerOfRotation);
         this.cwPerpDirection = corToPosition.normalize().cwPerp();
 
@@ -92,11 +104,11 @@ public class SwerveModule extends SubsystemBase {
 
         // TODO: Clean up
         double currentAngle = getCurrentAngleRadians();
-        // double targetAngleRadians = Math.abs(targetChassisVelocity.getX()) > 1e-6
-        //         && Math.abs(targetChassisVelocity.getY()) > 1e-6
-        //                 ? Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX())
-        //                 : Math.PI / 2.0;
-        double targetAngleRadians = Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX());
+        double targetAngleRadians = Math.abs(targetChassisVelocity.getX()) > 1e-6
+                && Math.abs(targetChassisVelocity.getY()) > 1e-6
+                        ? Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX())
+                        : Math.PI / 2.0;
+        // double targetAngleRadians = Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX());
 
         this.pivotController.setSetpoint(Math.toDegrees(targetAngleRadians));
     }
@@ -107,14 +119,11 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public double getCurrentAngleRadians() {
-        double angle = Math.toRadians(-(CANCoder.getAbsolutePosition() - CANCoderAngleOffset));
-        return angle;
-        // return canCoder.getAbsolutePosition().getValue();
-        // double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
-        // DriveConstants.kSteeringGearRatio * 2 * Math.PI
-        // + DriveConstants.kSteeringInitialAngleRadians;
-        // double moddedAngle = MathUtil.angleModulus(angle);
-        // return moddedAngle;
+        double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
+        DriveConstants.kSteeringGearRatio * 2 * Math.PI
+        + DriveConstants.kSteeringInitialAngleRadians;
+        double moddedAngle = MathUtil.angleModulus(angle);
+        return moddedAngle;
     }
 
     public Vector2 getTargetLocalVelocity() {
@@ -131,9 +140,12 @@ public class SwerveModule extends SubsystemBase {
 
     @Override
     public void periodic() {
-        System.out.printf("Mod %s: %.2f\n", name, pivotController.getPositionError());
+        // Update velocity control PID
+        this.driveMotorController.setP(DriveConstants.kDriveVelocityP);
+        this.driveMotorController.setI(DriveConstants.kDriveVelocityI);
+        this.driveMotorController.setD(DriveConstants.kDriveVelocityD);
 
-        ShuffleBoardManager.getInstance().updatePIDController(pivotController);
+        System.out.printf("Mod %s: %.2f\n", name, pivotController.getPositionError());
 
         double currentAngleRadians = getCurrentAngleRadians();
 
@@ -145,17 +157,17 @@ public class SwerveModule extends SubsystemBase {
         if (speed < 0.0) {
             System.out.println("Mod " + name + ": Going backwards");
         }
-        driveMotor.set(MathUtil.clamp(speed, -0.1, 0.1)); // TODO: Use velocity
+        // driveMotor.set(MathUtil.clamp(speed, -0.1, 0.1)); // TODO: Use velocity
+        double velocity = MathUtil.clamp(speed, -0.1, 0.1) * 3000;
+        
+        // Velocity control
+        driveMotorController.setReference(velocity, ControlType.kVelocity);
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);
         double pivotOutput = pivotController.calculate(currentAngleDegrees);
         // atSetpoint() doesn't work?
         steeringMotor.set(pivotOutput);
-
-        // TODO: Velocity control
-        driveMotor.getPIDController().setP(0.01);
-        driveMotor.getPIDController().setReference(0.05, ControlType.kVelocity, 0);
 
         // System.out.printf("Target angle: %.2f; current angle: %.2f; error %.2f.  ", currentAngleDegrees, pivotController.getSetpoint(), pivotController.getPositionError());
         // System.out.print("Target local velocity: " + targetLocalVelocity.toString() + "; ");
