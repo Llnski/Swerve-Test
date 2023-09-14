@@ -11,6 +11,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
@@ -35,6 +36,10 @@ public class Robot extends TimedRobot {
 
   CANCoder canCoder1;
 
+  private void initSmartDashboard() {
+      // TODO: Custom Dashboard
+  }
+
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -45,6 +50,8 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
     driveSubsystem.setIdleMode(IdleMode.kCoast, IdleMode.kCoast);
+
+    initSmartDashboard();
   }
 
   /**

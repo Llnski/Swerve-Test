@@ -14,8 +14,10 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.util.ShuffleBoardManager;
 import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
@@ -27,7 +29,7 @@ public class SwerveModule extends SubsystemBase {
 
     private Vector2 targetLocalVelocity = new Vector2(0, 0);
 
-    private PIDController pivotController = new PIDController(0.005, 0.0, 0.0);
+    private PIDController pivotController = new PIDController(0.005, 0.0, 0.0001);
     private SparkMaxPIDController velocityController;
 
     public RelativeEncoder pivotEncoder;
@@ -38,6 +40,10 @@ public class SwerveModule extends SubsystemBase {
     private boolean shouldFlipAngle = false;
 
     private String name;
+
+    public double getPositionError() {
+        return pivotController.getPositionError();
+    }
 
     public void shouldFlipAngle(boolean flipAngle) {
         this.shouldFlipAngle = flipAngle;
@@ -76,13 +82,13 @@ public class SwerveModule extends SubsystemBase {
         // Continuous across angles (degrees)
         this.pivotController.enableContinuousInput(-180, 180);
         // If within 0.5 degrees, don't care about velocity
-        this.pivotController.setTolerance(5.0, Double.POSITIVE_INFINITY);
+        // this.pivotController.setTolerance(0.5, Double.POSITIVE_INFINITY);
     }
 
     public void updateLocalVelocity(Vector2 targetChassisVelocity, double rotationSpeed) {
         this.rotationSpeed = rotationSpeed;
         targetLocalVelocity = targetChassisVelocity.plus(cwPerpDirection.times(rotationSpeed));
-        System.out.println("Mod " + name + ": CW Perp Direction: " + cwPerpDirection);
+        // System.out.println("Mod " + name + ": CW Perp Direction: " + cwPerpDirection);
 
         // TODO: Clean up
         double currentAngle = getCurrentAngleRadians();
@@ -125,6 +131,10 @@ public class SwerveModule extends SubsystemBase {
 
     @Override
     public void periodic() {
+        System.out.printf("Mod %s: %.2f\n", name, pivotController.getPositionError());
+
+        ShuffleBoardManager.getInstance().updatePIDController(pivotController);
+
         double currentAngleRadians = getCurrentAngleRadians();
 
         // Update motor velocity based on dot product between
@@ -142,6 +152,10 @@ public class SwerveModule extends SubsystemBase {
         double pivotOutput = pivotController.calculate(currentAngleDegrees);
         // atSetpoint() doesn't work?
         steeringMotor.set(pivotOutput);
+
+        // TODO: Velocity control
+        driveMotor.getPIDController().setP(0.01);
+        driveMotor.getPIDController().setReference(0.05, ControlType.kVelocity, 0);
 
         // System.out.printf("Target angle: %.2f; current angle: %.2f; error %.2f.  ", currentAngleDegrees, pivotController.getSetpoint(), pivotController.getPositionError());
         // System.out.print("Target local velocity: " + targetLocalVelocity.toString() + "; ");
