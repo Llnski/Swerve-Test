@@ -109,6 +109,12 @@ public class SwerveModule extends SubsystemBase {
                         ? Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX())
                         : Math.PI / 2.0;
         // double targetAngleRadians = Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX());
+        if (Math.abs(targetAngleRadians - currentAngle)
+            < Math.abs(2 * Math.PI + targetAngleRadians - currentAngle)
+        ) {
+            targetLocalVelocity = targetLocalVelocity.unaryMinus();
+            targetAngleRadians = -targetAngleRadians;
+        }
 
         this.pivotController.setSetpoint(Math.toDegrees(targetAngleRadians));
     }
@@ -119,11 +125,13 @@ public class SwerveModule extends SubsystemBase {
     }
 
     public double getCurrentAngleRadians() {
-        double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
-        DriveConstants.kSteeringGearRatio * 2 * Math.PI
-        + DriveConstants.kSteeringInitialAngleRadians;
-        double moddedAngle = MathUtil.angleModulus(angle);
-        return moddedAngle;
+        // double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
+        // DriveConstants.kSteeringGearRatio * 2 * Math.PI
+        // + DriveConstants.kSteeringInitialAngleRadians;
+        // double moddedAngle = MathUtil.angleModulus(angle);
+    
+        double angle = Math.toRadians(-(CANCoder.getAbsolutePosition() - CANCoderAngleOffset));
+        return angle;
     }
 
     public Vector2 getTargetLocalVelocity() {
@@ -161,7 +169,7 @@ public class SwerveModule extends SubsystemBase {
         double velocity = MathUtil.clamp(speed, -0.1, 0.1) * 3000;
         
         // Velocity control
-        driveMotorController.setReference(velocity, ControlType.kVelocity);
+        // driveMotorController.setReference(velocity, ControlType.kVelocity);
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);
