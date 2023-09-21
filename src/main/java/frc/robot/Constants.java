@@ -49,6 +49,8 @@ public final class Constants {
     public static final int kMod4CANCoder = 40;
     public static final int kMod4SteeringMotor = 41;
     public static final int kMod4DriveMotor = 42;
+
+    public static final int kPigeon = 50;
   }
 
   public static class OperatorConstants {

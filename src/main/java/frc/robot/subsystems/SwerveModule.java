@@ -2,23 +2,23 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
+    private final static GenericEntry maxSpeedRPM = Robot.tab.add("Max Speed (RPM)", 1000).getEntry();
+
     private CANSparkMax driveMotor, steeringMotor;
     public CANCoder CANCoder;
 
@@ -166,10 +166,10 @@ public class SwerveModule extends SubsystemBase {
             System.out.println("Mod " + name + ": Going backwards");
         }
         // driveMotor.set(MathUtil.clamp(speed, -0.1, 0.1)); // TODO: Use velocity
-        double velocity = MathUtil.clamp(speed, -0.1, 0.1) * 3000;
+        double velocity = speed * maxSpeedRPM.getDouble(0.0);
         
         // Velocity control
-        // driveMotorController.setReference(velocity, ControlType.kVelocity);
+        driveMotorController.setReference(velocity, ControlType.kVelocity);
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);

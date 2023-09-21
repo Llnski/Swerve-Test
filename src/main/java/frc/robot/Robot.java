@@ -40,10 +40,10 @@ public class Robot extends TimedRobot {
 
   CANCoder canCoder1;
 
-  private final ShuffleboardTab tab = Shuffleboard.getTab("Swerve Test");
-  private final GenericEntry velocityKP = tab.add("kP", DriveConstants.kDriveVelocityP).getEntry();
-  private final GenericEntry velocityKI = tab.add("kI", DriveConstants.kDriveVelocityI).getEntry();
-  private final GenericEntry velocityKD = tab.add("kD", DriveConstants.kDriveVelocityD).getEntry();
+  public final static ShuffleboardTab tab = Shuffleboard.getTab("Swerve Test");
+  private final static GenericEntry velocityKP = tab.add("kP", DriveConstants.kDriveVelocityP).getEntry();
+  private final static GenericEntry velocityKI = tab.add("kI", DriveConstants.kDriveVelocityI).getEntry();
+  private final static GenericEntry velocityKD = tab.add("kD", DriveConstants.kDriveVelocityD).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used for any
