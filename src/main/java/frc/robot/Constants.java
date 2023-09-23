@@ -7,8 +7,8 @@ package frc.robot;
 import com.revrobotics.CANSparkMaxLowLevel;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
-import frc.robot.util.Vector2;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -63,10 +63,10 @@ public final class Constants {
     public static final double kLength = Units.inchesToMeters(28);
     public static final double kWidth = Units.inchesToMeters(28);
 
-    public static final Vector2 kMod1Position = new Vector2(kWidth / 2, kLength / 2);
-    public static final Vector2 kMod2Position = new Vector2(-kWidth / 2, kLength / 2).unaryMinus();
-    public static final Vector2 kMod3Position = new Vector2(-kWidth / 2, -kLength / 2);
-    public static final Vector2 kMod4Position = new Vector2(kWidth / 2, -kLength / 2).unaryMinus();
+    public static final Translation2d kMod1Position = new Translation2d(kWidth / 2, kLength / 2);
+    public static final Translation2d kMod2Position = new Translation2d(-kWidth / 2, kLength / 2).unaryMinus();
+    public static final Translation2d kMod3Position = new Translation2d(-kWidth / 2, -kLength / 2);
+    public static final Translation2d kMod4Position = new Translation2d(kWidth / 2, -kLength / 2).unaryMinus();
 
     public static final double kMod1CANCoderOffset = 49.83398;
     public static final double kMod2CANCoderOffset = -134.20898;
@@ -74,6 +74,7 @@ public final class Constants {
     public static final double kMod4CANCoderOffset = 0.87891;
 
     public static final double kMaxSpeedMetersPerSecond = 0.2; // TODO: Determine max possible/desired speed
+    public static final double kMaxRotationRadiansPerSecond = 0.5; // TODO: Determine max possible/desired speed
 
     public static final double kDriveGearRatio = 1/6.75; 
     

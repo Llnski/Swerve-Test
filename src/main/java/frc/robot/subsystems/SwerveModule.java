@@ -4,20 +4,25 @@ import com.ctre.phoenix.sensors.CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.CANSparkMax.SoftLimitDirection;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
-    private final static GenericEntry maxSpeedRPM = Robot.tab.add("Max Speed (RPM)", 1000).getEntry();
+    private final static GenericEntry RPMSoftLimit = Robot.tab.add("Max Voltage", 0.5).getEntry();
 
     private CANSparkMax driveMotor, steeringMotor;
     public CANCoder CANCoder;
@@ -25,9 +30,9 @@ public class SwerveModule extends SubsystemBase {
     private SparkMaxPIDController driveMotorController;
 
     // Position vectors for updating speed
-    private Vector2 position, corToPosition, cwPerpDirection;
+    private Translation2d position;
 
-    private Vector2 targetLocalVelocity = new Vector2(0, 0);
+    private SwerveModuleState targetState;
 
     private PIDController pivotController = new PIDController(0.005, 0.0, 0.0001);
     private SparkMaxPIDController velocityController;
@@ -35,25 +40,14 @@ public class SwerveModule extends SubsystemBase {
     public RelativeEncoder pivotEncoder;
     public RelativeEncoder driveEncoder;
 
-    private Vector2 fieldPosition;
+    private Translation2d fieldPosition;
 
-    private double rotationSpeed = 0;
     private double CANCoderAngleOffset;
-
-    private boolean shouldFlipAngle = false;
 
     private String name;
 
     public double getPositionError() {
         return pivotController.getPositionError();
-    }
-
-    public Vector2 getFieldPosition() {
-        return this.fieldPosition;
-    }
-
-    public void shouldFlipAngle(boolean flipAngle) {
-        this.shouldFlipAngle = flipAngle;
     }
 
     public RelativeEncoder getPivotEncoder() {
@@ -65,8 +59,8 @@ public class SwerveModule extends SubsystemBase {
         steeringMotor.setIdleMode(steeringIdleMode);
     }
 
-    public SwerveModule(String name, CANSparkMax steeringMotor, CANSparkMax driveMotor, CANCoder CANCoder, Vector2 position,
-            Vector2 centerOfRotation, double CANCoderAngleOffset) {
+    public SwerveModule(String name, CANSparkMax steeringMotor, CANSparkMax driveMotor, CANCoder CANCoder, Translation2d position,
+            Translation2d centerOfRotation, double CANCoderAngleOffset) {
         this.name = name;
         this.driveMotor = driveMotor;
         this.driveMotorController = driveMotor.getPIDController();
@@ -88,62 +82,33 @@ public class SwerveModule extends SubsystemBase {
 
         this.position = position;
         
-        this.corToPosition = position.minus(centerOfRotation);
-        this.cwPerpDirection = corToPosition.normalize().cwPerp();
-
         // Continuous across angles (degrees)
         this.pivotController.enableContinuousInput(-180, 180);
         // If within 0.5 degrees, don't care about velocity
         // this.pivotController.setTolerance(0.5, Double.POSITIVE_INFINITY);
     }
 
-    public void updateLocalVelocity(Vector2 targetChassisVelocity, double rotationSpeed) {
-        this.rotationSpeed = rotationSpeed;
-        targetLocalVelocity = targetChassisVelocity.plus(cwPerpDirection.times(rotationSpeed));
-        // System.out.println("Mod " + name + ": CW Perp Direction: " + cwPerpDirection);
-
-        // TODO: Clean up
-        double currentAngle = getCurrentAngleRadians();
-        double targetAngleRadians = Math.abs(targetChassisVelocity.getX()) > 1e-6
-                && Math.abs(targetChassisVelocity.getY()) > 1e-6
-                        ? Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX())
-                        : Math.PI / 2.0;
-        // double targetAngleRadians = Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX());
-        if (Math.abs(targetAngleRadians - currentAngle)
-            < Math.abs(2 * Math.PI + targetAngleRadians - currentAngle)
-        ) {
-            targetLocalVelocity = targetLocalVelocity.unaryMinus();
-            targetAngleRadians = -targetAngleRadians;
-        }
-
-        this.pivotController.setSetpoint(Math.toDegrees(targetAngleRadians));
+    public void updateTargetState(SwerveModuleState state) {
+        this.targetState = state;
+        double speedRotations = state.speedMetersPerSecond * Constants.DriveConstants.kDriveGearRatio;
+        this.driveMotorController.setReference(speedRotations, ControlType.kVelocity);
+        this.pivotController.setSetpoint(state.angle.getDegrees());
     }
 
-    public void updateCenterOfRotation(Vector2 newCenterOfRotation) {
-        corToPosition = position.minus(newCenterOfRotation);
-        updateLocalVelocity(newCenterOfRotation, rotationSpeed);
-    }
-
-    public double getCurrentAngleRadians() {
+    public Rotation2d getRotation() {
         // double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
         // DriveConstants.kSteeringGearRatio * 2 * Math.PI
         // + DriveConstants.kSteeringInitialAngleRadians;
         // double moddedAngle = MathUtil.angleModulus(angle);
     
-        double angle = Math.toRadians(-(CANCoder.getAbsolutePosition() - CANCoderAngleOffset));
-        return angle;
+        double angleRadians = Math.toRadians(-(CANCoder.getAbsolutePosition() - CANCoderAngleOffset));
+        Rotation2d rotation = new Rotation2d(angleRadians);
+        return rotation;
     }
 
-    public Vector2 getTargetLocalVelocity() {
-        return targetLocalVelocity;
-    }
-
-    public void setTargetSpeed(double speed) {
-        targetLocalVelocity = targetLocalVelocity.normalize().times(speed);
-    }
-
-    public double getTargetSpeed() {
-        return targetLocalVelocity.norm();
+    public SwerveModulePosition getPosition() {
+        double distanceMeters = driveEncoder.getPosition() * DriveConstants.kDriveGearRatio;
+        return new SwerveModulePosition(distanceMeters, getRotation());
     }
 
     @Override
@@ -153,38 +118,19 @@ public class SwerveModule extends SubsystemBase {
         this.driveMotorController.setI(DriveConstants.kDriveVelocityI);
         this.driveMotorController.setD(DriveConstants.kDriveVelocityD);
 
-        System.out.printf("Mod %s: %.2f\n", name, pivotController.getPositionError());
+        double limit = RPMSoftLimit.getDouble(0.0);
+        this.driveMotorController.setOutputRange(-limit, limit);
 
-        double currentAngleRadians = getCurrentAngleRadians();
-
-        // Update motor velocity based on dot product between
-        // current heading and target local velocity
-        double speed = Math.cos(currentAngleRadians) * targetLocalVelocity.getX()
-                + Math.sin(currentAngleRadians) * targetLocalVelocity.getY();
-        // velocityController.setReference(speed, ControlType.kVelocity);
-        if (speed < 0.0) {
-            System.out.println("Mod " + name + ": Going backwards");
-        }
-        // driveMotor.set(MathUtil.clamp(speed, -0.1, 0.1)); // TODO: Use velocity
-        double velocity = speed * maxSpeedRPM.getDouble(0.0);
-        
-        // Velocity control
-        driveMotorController.setReference(velocity, ControlType.kVelocity);
-
-        // Control motor to optimal heading
-        double currentAngleDegrees = Math.toDegrees(currentAngleRadians);
+        double currentAngleDegrees = getRotation().getRadians();
         double pivotOutput = pivotController.calculate(currentAngleDegrees);
-        // atSetpoint() doesn't work?
-        steeringMotor.set(pivotOutput);
 
-        // System.out.printf("Target angle: %.2f; current angle: %.2f; error %.2f.  ", currentAngleDegrees, pivotController.getSetpoint(), pivotController.getPositionError());
-        // System.out.print("Target local velocity: " + targetLocalVelocity.toString() + "; ");
+        steeringMotor.set(pivotOutput);
     }
 
     public static class SwerveModuleBuilder {
         CANSparkMax steeringMotor = null, driveMotor = null;
         CANCoder canCoder = null;
-        Vector2 position = null, centerOfRotation = null;
+        Translation2d position = null, centerOfRotation = null;
         Double CANCoderOffset = null;
         String name = "";
 
@@ -210,12 +156,12 @@ public class SwerveModule extends SubsystemBase {
             return this;
         }
 
-        public SwerveModuleBuilder setPosition(Vector2 position) {
+        public SwerveModuleBuilder setPosition(Translation2d position) {
             this.position = position;
             return this;
         }
 
-        public SwerveModuleBuilder setCenterOfRotation(Vector2 centerOfRotation) {
+        public SwerveModuleBuilder setCenterOfRotation(Translation2d centerOfRotation) {
             this.centerOfRotation = centerOfRotation;
             return this;
         }

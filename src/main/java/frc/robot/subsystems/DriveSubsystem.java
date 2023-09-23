@@ -4,33 +4,51 @@
 
 package frc.robot.subsystems;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import com.ctre.phoenix.sensors.Pigeon2;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.SwerveModule.SwerveModuleBuilder;
-import frc.robot.util.Vector2;
 import frc.robot.Constants.CANIds;
 
 public class DriveSubsystem extends SubsystemBase {
   SwerveModule backLeft, backRight, frontLeft, frontRight;
 
-  Vector2 centerOfRotation = new Vector2(0, 0);
-  Vector2 velocity = new Vector2(0, 0);
-  double cwRotationSpeed = 0;
+  SwerveDriveKinematics kinematics;
+  SwerveDriveOdometry odometry;
+  SwerveDrivePoseEstimator poseEstimator;
 
   public SwerveModule swerveModule1, swerveModule2, swerveModule3, swerveModule4;
   SwerveModule[] swerveModules = new SwerveModule[4];
 
-  public DriveSubsystem() {
+  Pigeon2 pigeon;
+
+  Rotation2d getRotation() {
+    return Rotation2d.fromDegrees(pigeon.getYaw());
+  }
+
+  public DriveSubsystem(Pigeon2 pigeon) {
+    this.pigeon = pigeon;
+
     swerveModule1 = new SwerveModuleBuilder("1")
         .setSteeringMotorId(CANIds.kMod1SteeringMotor)
         .setDriveMotorId(CANIds.kMod1DriveMotor)
         .setCanCoderId(CANIds.kMod1CANCoder)
         .setPosition(DriveConstants.kMod1Position)
-        .setCenterOfRotation(centerOfRotation)
         .setCANCoderOffset(DriveConstants.kMod1CANCoderOffset)
         .build();
 
@@ -39,7 +57,6 @@ public class DriveSubsystem extends SubsystemBase {
         .setDriveMotorId(CANIds.kMod2DriveMotor)
         .setCanCoderId(CANIds.kMod2CANCoder)
         .setPosition(DriveConstants.kMod2Position)
-        .setCenterOfRotation(centerOfRotation)
         .setCANCoderOffset(DriveConstants.kMod2CANCoderOffset)
         .build();
 
@@ -49,7 +66,6 @@ public class DriveSubsystem extends SubsystemBase {
         .setCanCoderId(CANIds.kMod3CANCoder)
         .setPosition(DriveConstants.kMod3Position)
         .setCANCoderOffset(DriveConstants.kMod3CANCoderOffset)
-        .setCenterOfRotation(centerOfRotation)
         .build();
 
     swerveModule4 = new SwerveModuleBuilder("4")
@@ -58,8 +74,14 @@ public class DriveSubsystem extends SubsystemBase {
         .setCanCoderId(CANIds.kMod4CANCoder)
         .setPosition(DriveConstants.kMod4Position)
         .setCANCoderOffset(DriveConstants.kMod4CANCoderOffset)
-        .setCenterOfRotation(centerOfRotation)
         .build();
+
+    kinematics = new SwerveDriveKinematics(
+      DriveConstants.kMod1Position,
+      DriveConstants.kMod2Position,
+      DriveConstants.kMod3Position,
+      DriveConstants.kMod4Position
+    );
 
     swerveModules[0] = swerveModule1;
     swerveModules[1] = swerveModule2;
@@ -72,32 +94,28 @@ public class DriveSubsystem extends SubsystemBase {
 
     System.out.println("Registering swerve modules");
     // CommandScheduler.getInstance().registerSubsystem(swerveModules);
-  }
 
-  public void updateVelocity(double angleRadians, double speed, double cwRotationSpeed) {
-    double clampedSpeed = MathUtil.clamp(speed, 0, DriveConstants.kMaxSpeedMetersPerSecond); // Clamp speed
-    this.velocity = new Vector2(Math.cos(angleRadians), Math.sin(angleRadians)).times(clampedSpeed);
-    this.cwRotationSpeed = cwRotationSpeed;
+    SwerveModulePosition[] modulePositions = new SwerveModulePosition[swerveModules.length];
 
-    double maxModuleSpeed = Double.NEGATIVE_INFINITY;
-
-    for (SwerveModule module : swerveModules) {
-      module.updateLocalVelocity(velocity, cwRotationSpeed);
-      maxModuleSpeed = Math.max(maxModuleSpeed, module.getTargetSpeed());
+    for (int i = 0; i < modulePositions.length; i++){
+      modulePositions[i] = swerveModules[i].getPosition();
     }
 
-    // If max module speed (velocity + rotation) is greater than max NEO speed,
-    // then rescale each module speed accordingly
-    if (maxModuleSpeed > DriveConstants.kMaxSpeedMetersPerSecond) {
-      for (SwerveModule module : swerveModules) {
-        module.setTargetSpeed(module.getTargetSpeed() / maxModuleSpeed * DriveConstants.kMaxSpeedMetersPerSecond);
-      }
-    }
+    odometry = new SwerveDriveOdometry(kinematics, getRotation(), modulePositions);
   }
 
-  public void updateCenterOfRotation(Vector2 centerOfRotation) {
-    for (SwerveModule module : swerveModules) {
-      module.updateCenterOfRotation(centerOfRotation);
+  public void updateSpeeds(ChassisSpeeds fieldRelativeSpeeds) {
+    double yawDegrees = pigeon.getYaw();
+    Rotation2d robotRotation = Rotation2d.fromDegrees(yawDegrees);
+    ChassisSpeeds robotRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds, robotRotation);
+    SwerveModuleState[] states = kinematics.toSwerveModuleStates(robotRelativeSpeeds);
+    
+    for (int i = 0; i < states.length; i++) {
+      SwerveModuleState state = states[i];
+      SwerveModule module = swerveModules[i];
+      Rotation2d moduleRotation = module.getRotation();
+      SwerveModuleState optimizedState = SwerveModuleState.optimize(state, moduleRotation);
+      module.updateTargetState(optimizedState);
     }
   }
 
@@ -107,17 +125,22 @@ public class DriveSubsystem extends SubsystemBase {
     }
   }
 
-  public Vector2 getPosition() {
-    Vector2 total = new Vector2();
-    for (SwerveModule sm : swerveModules) {
-      total.plus(sm.getFieldPosition());
-    }
-    return total.div(4);
+  public Pose2d getPoseMeters() {
+    return odometry.getPoseMeters();
   }
 
   @Override
   public void periodic() {
     // SwerveModules update motors locally
+
+    SwerveModulePosition[] modulePositions = new SwerveModulePosition[swerveModules.length];
+
+    for (int i = 0; i < modulePositions.length; i++){
+      modulePositions[i] = swerveModules[i].getPosition();
+    }
+
+    odometry.update(getRotation(), modulePositions);
+
 
     // double backLeftPosition = swerveModules[0].getPivotEncoder().getPosition();
     // double angleDegrees =

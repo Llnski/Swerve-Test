@@ -6,9 +6,12 @@ package frc.robot;
 
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderConfiguration;
+import com.ctre.phoenix.sensors.Pigeon2;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
@@ -17,6 +20,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.CANIds;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.SquareTest;
@@ -36,7 +40,9 @@ public class Robot extends TimedRobot {
   private final XboxController driverController = new XboxController(
       OperatorConstants.kDriverControllerPort);
 
-  private final DriveSubsystem driveSubsystem = new DriveSubsystem();
+  private final Pigeon2 pigeon = new Pigeon2(CANIds.kPigeon);
+
+  private final DriveSubsystem driveSubsystem = new DriveSubsystem(pigeon);
 
   CANCoder canCoder1;
 
@@ -44,6 +50,7 @@ public class Robot extends TimedRobot {
   private final static GenericEntry velocityKP = tab.add("kP", DriveConstants.kDriveVelocityP).getEntry();
   private final static GenericEntry velocityKI = tab.add("kI", DriveConstants.kDriveVelocityI).getEntry();
   private final static GenericEntry velocityKD = tab.add("kD", DriveConstants.kDriveVelocityD).getEntry();
+  private final static GenericEntry maxSpeedMetersPerSecond = tab.add("Max Speed m/s", DriveConstants.kMaxSpeedMetersPerSecond).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -116,16 +123,21 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-      double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.035);
-      double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.035);
-      double speed = Math.hypot(x, y)
-          * DriveConstants.kMaxSpeedMetersPerSecond;
-      double angleRadians = (Math.abs(x) > 1e-6 || Math.abs(y) > 1e-6) ? Math.atan2(y, x) : Math.PI / 2;
-      angleRadians *= -1;
-      angleRadians += Math.PI/2;
-      double cwRotationSpeed = MathUtil.applyDeadband(driverController.getRightX(), 0.03);
+      double vx = MathUtil.applyDeadband(driverController.getLeftX(), 0.035);
+      double vy = MathUtil.applyDeadband(-driverController.getLeftY(), 0.035);
+
+      double maxSpeed = maxSpeedMetersPerSecond.getDouble(0.0);
+
+      double vxMetersPerSecond = vx * maxSpeed;
+      double vyMetersPerSecond = vy * maxSpeed;
+
+      double omega = MathUtil.applyDeadband(
+        driverController.getRightX(), 0.03);
+
+      double omegaRadiansPerSecond = omega * DriveConstants.kMaxRotationRadiansPerSecond;
+
       // "CW rotation" is really CCW, todo
-      driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
+      ChassisSpeeds speeds = new ChassisSpeeds(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
       System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
 
 
