@@ -42,13 +42,7 @@ public class SwerveModule extends SubsystemBase {
     private double rotationSpeed = 0;
     private double CANCoderAngleOffset;
 
-    private boolean shouldFlipAngle = false;
-
     private String name;
-
-    public void shouldFlipAngle(boolean flipAngle) {
-        this.shouldFlipAngle = flipAngle;
-    }
 
     public RelativeEncoder getPivotEncoder() {
         return pivotEncoder;
@@ -71,7 +65,7 @@ public class SwerveModule extends SubsystemBase {
         this.steeringMotor.restoreFactoryDefaults();
 
         this.velocityController = driveMotor.getPIDController();
-        this.velocityController.setP(0.00001);
+        this.velocityController.setP(0.00008);
 
         this.pivotEncoder = steeringMotor.getEncoder();
         this.pivotEncoder.setPosition(0); // Zero position
@@ -97,11 +91,17 @@ public class SwerveModule extends SubsystemBase {
 
         // TODO: Clean up
         double currentAngle = getCurrentAngleRadians();
-        // double targetAngleRadians = Math.abs(targetChassisVelocity.getX()) > 1e-6
-        //         && Math.abs(targetChassisVelocity.getY()) > 1e-6
-        //                 ? Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX())
-        //                 : Math.PI / 2.0;
         double targetAngleRadians = Math.atan2(targetLocalVelocity.getY(), targetLocalVelocity.getX());
+
+        double dot = Math.cos(currentAngle) * Math.cos(targetAngleRadians)
+            + Math.sin(currentAngle) * Math.sin(targetAngleRadians);
+
+        // Flip target angle if more than 90 degrees
+        if (dot < 0) {
+            targetAngleRadians = MathUtil.angleModulus(targetAngleRadians + Math.PI);
+        }
+
+        
 
         this.pivotController.setSetpoint(Math.toDegrees(targetAngleRadians));
     }
@@ -146,8 +146,9 @@ public class SwerveModule extends SubsystemBase {
         if (speed < 0.0) {
             System.out.println("Mod " + name + ": Going backwards");
         }
-        // velocityController.setReference(speed * 5000, ControlType.kVelocity);
-        driveMotor.set(MathUtil.clamp(speed, -1.0, 1.0)); // TODO: Use velocity
+
+        velocityController.setReference(speed * 5000, ControlType.kVelocity);
+        // driveMotor.set(MathUtil.clamp(speed, -1.0, 1.0)); // TODO: Use velocity
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);

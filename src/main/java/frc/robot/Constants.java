@@ -65,7 +65,7 @@ public final class Constants {
     public static final double kMod3CANCoderOffset = -71.10352;
     public static final double kMod4CANCoderOffset = 0.87891;
 
-    public static final double kMaxSpeedMetersPerSecond = 0.5; // TODO: Determine max possible/desired speed
+    public static final double kMaxSpeedMetersPerSecond = 2.0; // TODO: Determine max possible/desired speed
 
 
     // Used to get pivot angle from NEO encoders (for now)
