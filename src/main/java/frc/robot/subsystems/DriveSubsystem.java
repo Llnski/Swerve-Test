@@ -43,6 +43,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   public DriveSubsystem(Pigeon2 pigeon) {
     this.pigeon = pigeon;
+    pigeon.setYaw(0); // Reset yaw
 
     swerveModule1 = new SwerveModuleBuilder("1")
         .setSteeringMotorId(CANIds.kMod1SteeringMotor)
@@ -131,6 +132,8 @@ public class DriveSubsystem extends SubsystemBase {
 
   @Override
   public void periodic() {
+    System.out.println("Rotation: " + getRotation().toString());
+
     // SwerveModules update motors locally
 
     SwerveModulePosition[] modulePositions = new SwerveModulePosition[swerveModules.length];

@@ -50,7 +50,7 @@ public class Robot extends TimedRobot {
   private final static GenericEntry velocityKP = tab.add("kP", DriveConstants.kDriveVelocityP).getEntry();
   private final static GenericEntry velocityKI = tab.add("kI", DriveConstants.kDriveVelocityI).getEntry();
   private final static GenericEntry velocityKD = tab.add("kD", DriveConstants.kDriveVelocityD).getEntry();
-  private final static GenericEntry maxSpeedMetersPerSecond = tab.add("Max Speed m/s", DriveConstants.kMaxSpeedMetersPerSecond).getEntry();
+  private final static GenericEntry maxSpeedMetersPerSecond = tab.add("Max Speed Meters", DriveConstants.kMaxSpeedMetersPerSecond).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -138,7 +138,8 @@ public class Robot extends TimedRobot {
 
       // "CW rotation" is really CCW, todo
       ChassisSpeeds speeds = new ChassisSpeeds(vxMetersPerSecond, vyMetersPerSecond, omegaRadiansPerSecond);
-      System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
+      driveSubsystem.updateSpeeds(speeds);
+      // System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
 
 
       // System.out.printf("Pos 1: %.3f. Pos 2: %.3f. Pos 3: %.3f. Pos 4: %.3f\n", position1, position2, position3, position4);

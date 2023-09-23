@@ -119,7 +119,7 @@ public class SwerveModule extends SubsystemBase {
         this.driveMotorController.setD(DriveConstants.kDriveVelocityD);
 
         double limit = RPMSoftLimit.getDouble(0.0);
-        this.driveMotorController.setOutputRange(-limit, limit);
+        // this.driveMotorController.setOutputRange(-limit, limit);
 
         double currentAngleDegrees = getRotation().getRadians();
         double pivotOutput = pivotController.calculate(currentAngleDegrees);
@@ -174,14 +174,6 @@ public class SwerveModule extends SubsystemBase {
         public SwerveModule build() {
             // TODO: Maybe this should be handled in
             // SwerveModule? Good enough for now
-            if (steeringMotor == null
-                    || driveMotor == null
-                    || canCoder == null
-                    || position == null
-                    || centerOfRotation == null
-                    || CANCoderOffset == null) {
-                throw new IllegalArgumentException("Tried to build SwerveModule with incomplete parameters");
-            }
             return new SwerveModule(name,
                     steeringMotor,
                     driveMotor,

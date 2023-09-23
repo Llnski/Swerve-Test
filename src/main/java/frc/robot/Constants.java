@@ -73,13 +73,13 @@ public final class Constants {
     public static final double kMod3CANCoderOffset = -71.10352;
     public static final double kMod4CANCoderOffset = 0.87891;
 
-    public static final double kMaxSpeedMetersPerSecond = 0.2; // TODO: Determine max possible/desired speed
-    public static final double kMaxRotationRadiansPerSecond = 0.5; // TODO: Determine max possible/desired speed
+    public static final double kMaxSpeedMetersPerSecond = 6;
+    public static final double kMaxRotationRadiansPerSecond = 0.5;
 
     public static final double kDriveGearRatio = 1/6.75; 
     
     // TODO: Make final, migrate to custom Dashboard
-    public static double kDriveVelocityP = 0.0001;
+    public static double kDriveVelocityP = 0.01;
     public static double kDriveVelocityI = 0.0000;
     public static double kDriveVelocityD = 0.0000;
     
