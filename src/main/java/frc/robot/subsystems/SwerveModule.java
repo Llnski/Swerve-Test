@@ -13,6 +13,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.util.Vector2;
 
 public class SwerveModule extends SubsystemBase {
@@ -31,12 +32,6 @@ public class SwerveModule extends SubsystemBase {
     public RelativeEncoder driveEncoder;
 
     private Vector2 fieldPosition;
-
-    static Pigeon2 pigeon = new Pigeon2(50);
-
-    static {
-        pigeon.setYaw(0);
-    }
 
     private double rotationSpeed = 0;
     private double CANCoderAngleOffset;
@@ -87,7 +82,7 @@ public class SwerveModule extends SubsystemBase {
 
     public void updateLocalVelocity(Vector2 targetChassisVelocity, double rotationSpeed) {
         this.rotationSpeed = rotationSpeed;
-        double robotRotationRadians = Math.toRadians(pigeon.getYaw());
+        double robotRotationRadians = Math.toRadians(Robot.pigeon.getYaw());
         Vector2 rotatedTargetLocalVelocity = new Vector2(
             Math.cos(robotRotationRadians) * targetChassisVelocity.getX() - Math.sin(robotRotationRadians) * targetChassisVelocity.getY(),
             Math.sin(robotRotationRadians) * targetChassisVelocity.getX() + Math.cos(robotRotationRadians) * targetChassisVelocity.getY());

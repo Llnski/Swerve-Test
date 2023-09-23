@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.CANCoderConfiguration;
+import com.ctre.phoenix.sensors.Pigeon2;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.CANIds;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.SquareTest;
@@ -36,6 +38,12 @@ public class Robot extends TimedRobot {
       OperatorConstants.kDriverControllerPort);
 
   private final DriveSubsystem driveSubsystem = new DriveSubsystem();
+
+  public static Pigeon2 pigeon = new Pigeon2(CANIds.kPigeon);
+
+  static {
+      pigeon.setYaw(0);
+  }
 
   CANCoder canCoder1;
 
