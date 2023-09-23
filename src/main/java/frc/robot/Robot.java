@@ -15,7 +15,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants.SquareTest;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.util.Vector2;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -25,6 +27,8 @@ import frc.robot.subsystems.DriveSubsystem;
  */
 public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
+
+  private Vector2 prevPos;
 
   private RobotContainer m_robotContainer;
 
@@ -141,7 +145,7 @@ public class Robot extends TimedRobot {
 
     // var position = canCoder1.getAbsolutePosition();
     // System.out.printf("CANCoder 30: %.2f\n", position);
-
+    /* 
     double position1 = Math.toDegrees(driveSubsystem.swerveModule1.getCurrentAngleRadians());
     double position2 = Math.toDegrees(driveSubsystem.swerveModule2.getCurrentAngleRadians());
     double position3 = Math.toDegrees(driveSubsystem.swerveModule3.getCurrentAngleRadians());
@@ -149,7 +153,44 @@ public class Robot extends TimedRobot {
 
 
     System.out.printf("Pos 1: %.5f. Pos 2: %.5f. Pos 3: %.5f. Pos 4: %.5f\n", position1, position2, position3, position4);
+    */
 
+    if (Constants.SquareTest.currentTest=="Square1" || Constants.SquareTest.currentTest=="Square2") {
+      int currSide = 0;
+
+      
+      double x = driveSubsystem.getPosition().getX();
+      double y = driveSubsystem.getPosition().getY();
+      double desiredX = Constants.SquareTest.xLoc1[currSide];
+      double desiredY = Constants.SquareTest.yLoc1[currSide];
+      if (Constants.SquareTest.currentTest=="Square2"){
+        desiredX = Constants.SquareTest.xLoc2[currSide];
+        desiredY = Constants.SquareTest.yLoc2[currSide];
+      }
+      if (desiredX-x<=Constants.SquareTest.threshold && desiredY-y<=Constants.SquareTest.threshold) {
+        int toAdd = currSide == 3 ? -3 : 1;
+        currSide += toAdd;
+      }
+      else {
+        
+        double speed = 0.1 * DriveConstants.kMaxSpeedMetersPerSecond;
+        double angleRadians = Math.atan2(desiredY-y,desiredX-x);
+        double cwRotationSpeed = 0;
+        // "CW rotation" is really CCW, todo
+        driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
+        System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
+      }
+    }
+    if (Constants.SquareTest.currentTest=="Spin"){
+      
+      double cwRotationSpeed = 1*Constants.DriveConstants.kMaxSpeedMetersPerSecond;
+      driveSubsystem.updateVelocity(0, 0, -cwRotationSpeed);
+      System.out.printf("Current center: %.2f, change in position: %.2f\n",driveSubsystem.getPosition(),driveSubsystem.getPosition().minus(prevPos));
+      prevPos = driveSubsystem.getPosition();
+    }
+    else{
+      teleopExit();
+    }
   }
 
   /** This function is called once when the robot is first started up. */

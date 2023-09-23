@@ -23,6 +23,19 @@ import frc.robot.util.Vector2;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  
+  public static class SquareTest {
+    public static final String currentTest = "Square1";
+
+    public static final int[] xLoc1 = {0, 1, 1, 0};
+    public static final int[] yLoc1 = {1, 1, 0, 0};
+
+    public static final int[] xLoc2 = {1, 1, 0, 0};
+    public static final int[] yLoc2 = {0, 1, 1, 0};
+
+    public static final double threshold = 0.01;
+  }
+  
   public static class CANIds {
     // Module 1 (Front-right)
     public static final int kMod1CANCoder = 10;
@@ -67,6 +80,7 @@ public final class Constants {
 
     public static final double kMaxSpeedMetersPerSecond = 2.0; // TODO: Determine max possible/desired speed
 
+    public static final double kDriveGearRatio = 1/6.75; 
 
     // Used to get pivot angle from NEO encoders (for now)
     public static final double kSteeringGearRatio = 1/21.665599999999998;
