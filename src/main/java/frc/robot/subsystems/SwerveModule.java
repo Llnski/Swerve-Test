@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import javax.sql.rowset.serial.SerialArray;
 
 import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix.sensors.Pigeon2;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.SparkMaxPIDController;
@@ -31,6 +32,12 @@ public class SwerveModule extends SubsystemBase {
     private SparkMaxPIDController velocityController;
 
     public RelativeEncoder pivotEncoder;
+
+    static Pigeon2 pigeon = new Pigeon2(50);
+
+    static {
+        pigeon.setYaw(0);
+    }
 
     private double rotationSpeed = 0;
     private double CANCoderAngleOffset;
@@ -64,7 +71,7 @@ public class SwerveModule extends SubsystemBase {
         this.steeringMotor.restoreFactoryDefaults();
 
         this.velocityController = driveMotor.getPIDController();
-        this.velocityController.setP(0.01);
+        this.velocityController.setP(0.00001);
 
         this.pivotEncoder = steeringMotor.getEncoder();
         this.pivotEncoder.setPosition(0); // Zero position
@@ -81,7 +88,11 @@ public class SwerveModule extends SubsystemBase {
 
     public void updateLocalVelocity(Vector2 targetChassisVelocity, double rotationSpeed) {
         this.rotationSpeed = rotationSpeed;
-        targetLocalVelocity = targetChassisVelocity.plus(cwPerpDirection.times(rotationSpeed));
+        double robotRotationRadians = Math.toRadians(pigeon.getYaw());
+        Vector2 rotatedTargetLocalVelocity = new Vector2(
+            Math.cos(robotRotationRadians) * targetChassisVelocity.getX() - Math.sin(robotRotationRadians) * targetChassisVelocity.getY(),
+            Math.sin(robotRotationRadians) * targetChassisVelocity.getX() + Math.cos(robotRotationRadians) * targetChassisVelocity.getY());
+        targetLocalVelocity = rotatedTargetLocalVelocity.plus(cwPerpDirection.times(rotationSpeed));
         System.out.println("Mod " + name + ": CW Perp Direction: " + cwPerpDirection);
 
         // TODO: Clean up
@@ -135,7 +146,8 @@ public class SwerveModule extends SubsystemBase {
         if (speed < 0.0) {
             System.out.println("Mod " + name + ": Going backwards");
         }
-        driveMotor.set(MathUtil.clamp(speed, -0.1, 0.1)); // TODO: Use velocity
+        // velocityController.setReference(speed * 5000, ControlType.kVelocity);
+        driveMotor.set(MathUtil.clamp(speed, -1.0, 1.0)); // TODO: Use velocity
 
         // Control motor to optimal heading
         double currentAngleDegrees = Math.toDegrees(currentAngleRadians);

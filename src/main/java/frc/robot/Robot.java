@@ -107,8 +107,10 @@ public class Robot extends TimedRobot {
       double speed = Math.hypot(x, y)
           * DriveConstants.kMaxSpeedMetersPerSecond;
       double angleRadians = (Math.abs(x) > 1e-6 || Math.abs(y) > 1e-6) ? Math.atan2(y, x) : Math.PI / 2;
-      double cwRotationSpeed = MathUtil.applyDeadband(driverController.getRightX(), 0.03);
-      // "CW rotation" is really CCW, todo
+      double cwRotationSpeed = -MathUtil.applyDeadband(driverController.getRightX(), 0.03);
+      angleRadians *= -1;
+      angleRadians -= Math.PI/2;
+
       driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
       System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
 
