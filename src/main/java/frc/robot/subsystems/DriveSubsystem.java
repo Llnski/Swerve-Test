@@ -7,11 +7,14 @@ package frc.robot.subsystems;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.SwerveModule.SwerveModuleBuilder;
 import frc.robot.util.Vector2;
+import frc.robot.Robot;
 import frc.robot.Constants.CANIds;
 
 public class DriveSubsystem extends SubsystemBase {
@@ -105,6 +108,20 @@ public class DriveSubsystem extends SubsystemBase {
     for (SwerveModule module : swerveModules) {
       module.setIdleMode(driveIdleMode, steeringIdleMode);
     }
+  }
+
+  public Vector2 getFieldPosition() {
+    Vector2 fieldPosition = new Vector2();
+    for (SwerveModule module : swerveModules)
+      fieldPosition = fieldPosition.plus(module.getFieldPosition());
+    return fieldPosition.div(swerveModules.length);
+  }
+
+  public Pose2d getPose() {
+    Vector2 position = getFieldPosition();
+    // TODO: Move Pigeon to Robot.java
+    Rotation2d rotation = Rotation2d.fromDegrees(SwerveModule.pigeon.getYaw());
+    return new Pose2d(position.getX(), position.getY(), rotation);
   }
 
   @Override

@@ -26,14 +26,19 @@ public class SwerveModule extends SubsystemBase {
     // Position vectors for updating speed
     private Vector2 position, corToPosition, cwPerpDirection;
 
+    // Naive odometry. TODO: Clean up, integrate w/ AprilTags
+    private Vector2 fieldPosition;
+
     private Vector2 targetLocalVelocity = new Vector2(0, 0);
+
+    private double lastDriveMotorEncoderPosition;
 
     private PIDController pivotController = new PIDController(0.005, 0.0, 0.0);
     private SparkMaxPIDController velocityController;
 
-    public RelativeEncoder pivotEncoder;
+    public RelativeEncoder pivotEncoder, driveEncoder;
 
-    static Pigeon2 pigeon = new Pigeon2(50);
+    public static Pigeon2 pigeon = new Pigeon2(50);
 
     static {
         pigeon.setYaw(0);
@@ -70,9 +75,15 @@ public class SwerveModule extends SubsystemBase {
         this.pivotEncoder = steeringMotor.getEncoder();
         this.pivotEncoder.setPosition(0); // Zero position
 
+        this.driveEncoder = driveMotor.getEncoder();
+        this.driveEncoder.setPosition(0); // Also zero drive motor position
+        this.lastDriveMotorEncoderPosition = this.driveEncoder.getPosition();
+
         this.position = position;
         this.corToPosition = position.minus(centerOfRotation);
         this.cwPerpDirection = corToPosition.normalize().cwPerp();
+
+        this.fieldPosition = position;
 
         // Continuous across angles (degrees)
         this.pivotController.enableContinuousInput(-180, 180);
@@ -87,7 +98,6 @@ public class SwerveModule extends SubsystemBase {
             Math.cos(robotRotationRadians) * targetChassisVelocity.getX() - Math.sin(robotRotationRadians) * targetChassisVelocity.getY(),
             Math.sin(robotRotationRadians) * targetChassisVelocity.getX() + Math.cos(robotRotationRadians) * targetChassisVelocity.getY());
         targetLocalVelocity = rotatedTargetLocalVelocity.plus(cwPerpDirection.times(rotationSpeed));
-        System.out.println("Mod " + name + ": CW Perp Direction: " + cwPerpDirection);
 
         // TODO: Clean up
         double currentAngle = getCurrentAngleRadians();
@@ -101,8 +111,6 @@ public class SwerveModule extends SubsystemBase {
             targetAngleRadians = MathUtil.angleModulus(targetAngleRadians + Math.PI);
         }
 
-        
-
         this.pivotController.setSetpoint(Math.toDegrees(targetAngleRadians));
     }
 
@@ -114,12 +122,6 @@ public class SwerveModule extends SubsystemBase {
     public double getCurrentAngleRadians() {
         double angle = Math.toRadians(-(CANCoder.getAbsolutePosition() - CANCoderAngleOffset));
         return angle;
-        // return canCoder.getAbsolutePosition().getValue();
-        // double angle = (shouldFlipAngle ? -1 : 1) * pivotEncoder.getPosition() *
-        // DriveConstants.kSteeringGearRatio * 2 * Math.PI
-        // + DriveConstants.kSteeringInitialAngleRadians;
-        // double moddedAngle = MathUtil.angleModulus(angle);
-        // return moddedAngle;
     }
 
     public Vector2 getTargetLocalVelocity() {
@@ -134,18 +136,31 @@ public class SwerveModule extends SubsystemBase {
         return targetLocalVelocity.norm();
     }
 
+    public Vector2 getFieldPosition() {
+        return fieldPosition;
+    }
+
     @Override
     public void periodic() {
         double currentAngleRadians = getCurrentAngleRadians();
+
+        double currentDriveMotorEncoderPosition = driveEncoder.getPosition();
+        double deltaDriveMotorPosition = currentDriveMotorEncoderPosition - lastDriveMotorEncoderPosition;
+        double deltaDriveMotorMeters = deltaDriveMotorPosition * DriveConstants.kDriveGearRatio
+            * DriveConstants.kWheelCircumferenceMeters;
+        lastDriveMotorEncoderPosition = currentDriveMotorEncoderPosition;
+
+        Vector2 deltaPosition = new Vector2(
+            deltaDriveMotorMeters * Math.cos(currentAngleRadians),
+            deltaDriveMotorMeters * Math.sin(currentAngleRadians));
+
+        fieldPosition = fieldPosition.plus(deltaPosition);
 
         // Update motor velocity based on dot product between
         // current heading and target local velocity
         double speed = Math.cos(currentAngleRadians) * targetLocalVelocity.getX()
                 + Math.sin(currentAngleRadians) * targetLocalVelocity.getY();
         // velocityController.setReference(speed, ControlType.kVelocity);
-        if (speed < 0.0) {
-            System.out.println("Mod " + name + ": Going backwards");
-        }
 
         velocityController.setReference(speed * 5000, ControlType.kVelocity);
         // driveMotor.set(MathUtil.clamp(speed, -1.0, 1.0)); // TODO: Use velocity

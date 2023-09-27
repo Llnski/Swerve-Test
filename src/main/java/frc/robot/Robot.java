@@ -9,12 +9,16 @@ import com.ctre.phoenix.sensors.CANCoderConfiguration;
 import com.revrobotics.CANSparkMax.IdleMode;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.GoTo;
 import frc.robot.subsystems.DriveSubsystem;
 
 /**
@@ -74,12 +78,19 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+    // m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
-    if (m_autonomousCommand != null) {
-      m_autonomousCommand.schedule();
-    }
+    // // schedule the autonomous command (example)
+    // if (m_autonomousCommand != null) {
+    //   m_autonomousCommand.schedule();
+    // }
+
+    var command = 
+      new GoTo(driveSubsystem, new Pose2d(new Translation2d(1, 0), Rotation2d.fromRadians(0)))
+      .andThen(new GoTo(driveSubsystem, new Pose2d(new Translation2d(1, -1), Rotation2d.fromRadians(0))))
+      .andThen(new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, -1), Rotation2d.fromRadians(0))))
+      .andThen(new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, 0), Rotation2d.fromRadians(0))));
+    command.schedule();
   }
 
   /** This function is called periodically during autonomous. */
@@ -108,11 +119,14 @@ public class Robot extends TimedRobot {
           * DriveConstants.kMaxSpeedMetersPerSecond;
       double angleRadians = (Math.abs(x) > 1e-6 || Math.abs(y) > 1e-6) ? Math.atan2(y, x) : Math.PI / 2;
       double cwRotationSpeed = -MathUtil.applyDeadband(driverController.getRightX(), 0.03);
+
       angleRadians *= -1;
       angleRadians -= Math.PI/2;
 
       driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
-      System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
+      // System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
+      Pose2d pose = driveSubsystem.getPose();
+      System.out.println(pose.toString());
 
 
       // System.out.printf("Pos 1: %.3f. Pos 2: %.3f. Pos 3: %.3f. Pos 4: %.3f\n", position1, position2, position3, position4);
