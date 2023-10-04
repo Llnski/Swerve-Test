@@ -12,13 +12,18 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.commands.GoTo;
+import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
 
 /**
@@ -36,6 +41,8 @@ public class Robot extends TimedRobot {
       OperatorConstants.kDriverControllerPort);
 
   private final DriveSubsystem driveSubsystem = new DriveSubsystem();
+
+  private final ArmSubsystem armSubsystem = new ArmSubsystem();
 
   CANCoder canCoder1;
 
@@ -85,11 +92,15 @@ public class Robot extends TimedRobot {
     //   m_autonomousCommand.schedule();
     // }
 
-    var command = 
-      new GoTo(driveSubsystem, new Pose2d(new Translation2d(1, 0), Rotation2d.fromRadians(0)))
-      .andThen(new GoTo(driveSubsystem, new Pose2d(new Translation2d(1, -1), Rotation2d.fromRadians(0))))
-      .andThen(new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, -1), Rotation2d.fromRadians(0))))
-      .andThen(new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, 0), Rotation2d.fromRadians(0))));
+    var command = new SequentialCommandGroup(
+      new GoTo(driveSubsystem, new Pose2d(new Translation2d(1, 0), Rotation2d.fromRadians(0))),
+      new GoTo(driveSubsystem, new Pose2d(new Translation2d(1, -1), Rotation2d.fromRadians(0))),
+      new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, -1), Rotation2d.fromRadians(0))),
+      new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, 0), Rotation2d.fromRadians(0)))
+    ).andThen(() -> {
+      driveSubsystem.updateVelocity(Math.PI/2, 0, 0);
+    });
+      
     command.schedule();
   }
 
@@ -128,6 +139,18 @@ public class Robot extends TimedRobot {
       Pose2d pose = driveSubsystem.getPose();
       System.out.println(pose.toString());
 
+
+      double armExtensionSpeed = driverController.getLeftTriggerAxis() * 0.2;
+      boolean invertArmExtension = driverController.getLeftBumper();
+      if (invertArmExtension) armExtensionSpeed *= -1;
+
+      armSubsystem.setArmExtensionSpeed(armExtensionSpeed);
+
+      double armRotationSpeed = driverController.getRightTriggerAxis() * 0.2;
+      boolean invertArmRotation = driverController.getRightBumper();
+      if (invertArmRotation) armRotationSpeed *= -1;
+
+      armSubsystem.setArmRotationSpeed(armRotationSpeed);
 
       // System.out.printf("Pos 1: %.3f. Pos 2: %.3f. Pos 3: %.3f. Pos 4: %.3f\n", position1, position2, position3, position4);
       // var position = canCoder1.getPosition();

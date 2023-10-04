@@ -43,10 +43,26 @@ public final class Constants {
     public static final int kMod4CANCoder = 40;
     public static final int kMod4SteeringMotor = 41;
     public static final int kMod4DriveMotor = 42;
+  
+    public static final int kArmExtension = 60;
+    public static final int kArmRotation = 61;
+    public static final int kIntake = 62;
   }
 
   public static class OperatorConstants {
     public static final int kDriverControllerPort = 0;
+  }
+
+  public static class ArmConstants {
+    public static final double kArmMinDegrees = -50;
+    public static final double kArmMaxDegrees = 50;
+
+    public static final double kArmGearRatio = 1;
+    public static final double kArmRotationsToDegrees = 1;
+
+    public static final double kArmP = 0.001;
+    public static final double kArmI = 0;
+    public static final double kArmD = 0;
   }
 
   public static class DriveConstants {
@@ -75,5 +91,9 @@ public final class Constants {
     public static final double kDriveGearRatio = 1/6.75;
     public static final double kWheelRadiusMeters = Units.inchesToMeters(3.5);
     public static final double kWheelCircumferenceMeters = 2 * Math.PI * kWheelRadiusMeters;
+
+    public static final double kBalanceP = 0.001;
+    public static final double kBalanceI = 0;
+    public static final double kBalanceD = 0;
   }
 }
