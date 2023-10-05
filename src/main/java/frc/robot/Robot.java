@@ -44,8 +44,6 @@ public class Robot extends TimedRobot {
 
   private final ArmSubsystem armSubsystem = new ArmSubsystem();
 
-  CANCoder canCoder1;
-
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -121,15 +119,23 @@ public class Robot extends TimedRobot {
     driveSubsystem.setIdleMode(IdleMode.kBrake, IdleMode.kBrake);
   }
 
+  double speed = 0;
+  double speedControlKp = 0.1;
+
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
       double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.035);
       double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.035);
-      double speed = Math.hypot(x, y)
+      double inputSpeed = Math.hypot(x, y)
           * DriveConstants.kMaxSpeedMetersPerSecond;
       double angleRadians = (Math.abs(x) > 1e-6 || Math.abs(y) > 1e-6) ? Math.atan2(y, x) : Math.PI / 2;
       double cwRotationSpeed = -MathUtil.applyDeadband(driverController.getRightX(), 0.03);
+
+      // TODO: Either switch to something other than kP/weighted average
+      // and/or characterize in terms of convergence time (i.e. how long from speed=0.5 to speed=1)
+
+      speed += speedControlKp * (inputSpeed - speed);
 
       angleRadians *= -1;
       angleRadians -= Math.PI/2;
