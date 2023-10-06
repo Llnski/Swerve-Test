@@ -15,16 +15,23 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.Constants.ArmConstants;
+import frc.robot.Constants.AutonConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.Balance;
 import frc.robot.commands.GoTo;
 import frc.robot.subsystems.ArmSubsystem;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.SwerveModule;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -43,6 +50,12 @@ public class Robot extends TimedRobot {
   private final DriveSubsystem driveSubsystem = new DriveSubsystem();
 
   private final ArmSubsystem armSubsystem = new ArmSubsystem();
+
+  private final ShuffleboardTab tab = Shuffleboard.getTab("Swerve Test");
+  private final GenericEntry kBalanceP = tab.add("kBalanceP", AutonConstants.kBalanceP).getEntry();
+  private final GenericEntry kBalanceI = tab.add("kBalanceI", AutonConstants.kBalanceI).getEntry();
+  private final GenericEntry kBalanceD = tab.add("kBalanceD", AutonConstants.kBalanceD).getEntry();
+  private final GenericEntry kDriveP = tab.add("kDriveP", 0.1).getEntry();
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -69,6 +82,10 @@ public class Robot extends TimedRobot {
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
+
+    AutonConstants.kBalanceP = kBalanceP.getDouble(0.0);
+    AutonConstants.kBalanceI = kBalanceI.getDouble(0.0);
+    AutonConstants.kBalanceD = kBalanceD.getDouble(0.0);
 
     CommandScheduler.getInstance().run();
   }
@@ -122,9 +139,34 @@ public class Robot extends TimedRobot {
   double speed = 0;
   double speedControlKp = 0.1;
 
+  Command balance = null;
+
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
+    if (driverController.getBButtonPressed()) {
+      SwerveModule.pigeon.setYaw(0);
+    }
+
+    if (balance != null) {
+      if (balance.isFinished()) {
+        balance.cancel();
+        balance = null;
+      } else {
+        return;
+      }
+    }
+
+    if (driverController.getYButtonPressed()) {
+      balance = new SequentialCommandGroup(
+        new GoTo(driveSubsystem, new Pose2d(new Translation2d(0, -3), Rotation2d.fromDegrees(0))),
+        new Balance(driveSubsystem, SwerveModule.pigeon, 2)
+      );
+      balance.schedule();
+      System.out.println("Finished balancing");
+      return;
+    }
+
       double x = MathUtil.applyDeadband(driverController.getLeftX(), 0.035);
       double y = MathUtil.applyDeadband(-driverController.getLeftY(), 0.035);
       double inputSpeed = Math.hypot(x, y)
@@ -135,6 +177,8 @@ public class Robot extends TimedRobot {
       // TODO: Either switch to something other than kP/weighted average
       // and/or characterize in terms of convergence time (i.e. how long from speed=0.5 to speed=1)
 
+      speedControlKp = kDriveP.getDouble(0);
+
       speed += speedControlKp * (inputSpeed - speed);
 
       angleRadians *= -1;
@@ -143,7 +187,7 @@ public class Robot extends TimedRobot {
       driveSubsystem.updateVelocity(angleRadians, speed, -cwRotationSpeed);
       // System.out.printf("Driving towards: %.2f %.2f at speed %.2f with angle %.2f with rot %.2f\n", x, y, speed, Math.toDegrees(angleRadians), cwRotationSpeed);
       Pose2d pose = driveSubsystem.getPose();
-      System.out.println(pose.toString());
+      // System.out.println(pose.toString());
 
 
       double armExtensionSpeed = driverController.getLeftTriggerAxis() * 0.2;
@@ -157,6 +201,11 @@ public class Robot extends TimedRobot {
       if (invertArmRotation) armRotationSpeed *= -1;
 
       armSubsystem.setArmRotationSpeed(armRotationSpeed);
+
+      double intakeSpeedSign = (driverController.getXButton() ? 1 : 0)
+        + (driverController.getAButton() ? -1 : 0);
+      double intakeSpeed = intakeSpeedSign * ArmConstants.kIntakeSpeed;
+      armSubsystem.setIntakeSpeed(intakeSpeed);
 
       // System.out.printf("Pos 1: %.3f. Pos 2: %.3f. Pos 3: %.3f. Pos 4: %.3f\n", position1, position2, position3, position4);
       // var position = canCoder1.getPosition();

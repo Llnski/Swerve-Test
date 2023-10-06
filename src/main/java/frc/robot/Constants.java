@@ -60,9 +60,11 @@ public final class Constants {
     public static final double kArmGearRatio = 1;
     public static final double kArmRotationsToDegrees = 1;
 
-    public static final double kArmP = 0.001;
+    public static final double kArmP = 0.005;
     public static final double kArmI = 0;
     public static final double kArmD = 0;
+
+    public static final double kIntakeSpeed = 0.7;
   }
 
   public static class DriveConstants {
@@ -81,7 +83,7 @@ public final class Constants {
     public static final double kMod3CANCoderOffset = -71.10352;
     public static final double kMod4CANCoderOffset = 0.87891;
 
-    public static final double kMaxSpeedMetersPerSecond = 2.0; // TODO: Determine max possible/desired speed
+    public static final double kMaxSpeedMetersPerSecond = 1.5; // TODO: Determine max possible/desired speed
 
 
     // Used to get pivot angle from NEO encoders (for now)
@@ -91,9 +93,11 @@ public final class Constants {
     public static final double kDriveGearRatio = 1/6.75;
     public static final double kWheelRadiusMeters = Units.inchesToMeters(3.5);
     public static final double kWheelCircumferenceMeters = 2 * Math.PI * kWheelRadiusMeters;
+  }
 
-    public static final double kBalanceP = 0.001;
-    public static final double kBalanceI = 0;
-    public static final double kBalanceD = 0;
+  public static class AutonConstants {
+    public static double kBalanceP = 0.02;
+    public static double kBalanceI = 0;
+    public static double kBalanceD = 0;
   }
 }

@@ -20,7 +20,6 @@ public class ArmSubsystem extends SubsystemBase {
     private CANSparkMax armExtensionMotor;
     private SparkMaxPIDController armExtensionController;
 
-
     private CANSparkMax intakeMotor;
 
     public ArmSubsystem() {
@@ -33,6 +32,8 @@ public class ArmSubsystem extends SubsystemBase {
 
         this.armRotationMotor = new CANSparkMax(CANIds.kArmRotation, MotorType.kBrushless);
         this.armRotationController = this.armRotationMotor.getPIDController();
+
+        this.intakeMotor = new CANSparkMax(CANIds.kIntake, MotorType.kBrushed);
 
         // this.armRotationController.setP(ArmConstants.kArmP);
         // this.armRotationController.setI(ArmConstants.kArmI);
@@ -54,6 +55,10 @@ public class ArmSubsystem extends SubsystemBase {
 
     public void setArmRotationSpeed(double speedPercent) {
         armRotationMotor.set(speedPercent);
+    }
+
+    public void setIntakeSpeed(double speedPercent) {
+        intakeMotor.set(speedPercent);
     }
 
     public void setAngle(double degrees) {

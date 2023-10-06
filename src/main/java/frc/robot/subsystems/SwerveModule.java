@@ -106,6 +106,10 @@ public class SwerveModule extends SubsystemBase {
         double dot = Math.cos(currentAngle) * Math.cos(targetAngleRadians)
             + Math.sin(currentAngle) * Math.sin(targetAngleRadians);
 
+        // Only if very parallel
+        // TODO: Change to tuned parameter
+        dot = Math.pow(dot, 3);
+
         // Flip target angle if more than 90 degrees
         if (dot < 0) {
             targetAngleRadians = MathUtil.angleModulus(targetAngleRadians + Math.PI);
