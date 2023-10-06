@@ -23,7 +23,11 @@ import frc.robot.util.Vector2;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
-  public static class AutonConstants{
+  public static class AutonConstants {
+    public static double kBalanceP = 0.02;
+    public static double kBalanceI = 0;
+    public static double kBalanceD = 0;
+
     public static final int EXTENSION_SPEED_1 = 1;
     public static final int ROTATION_SPEED_1 = 1;
     public static final int INTAKE_SPEED_1 = 1;
@@ -34,6 +38,7 @@ public final class Constants {
     public static final int DRIVE_SPEED_1 = 1;
     public static final int DRIVE_ROTATION_1 = 1;
   }
+
   public static class CANIds {
     // Module 1 (Front-right)
     public static final int kMod1CANCoder = 10;
@@ -104,11 +109,5 @@ public final class Constants {
     public static final double kDriveGearRatio = 1/6.75;
     public static final double kWheelRadiusMeters = Units.inchesToMeters(3.5);
     public static final double kWheelCircumferenceMeters = 2 * Math.PI * kWheelRadiusMeters;
-  }
-
-  public static class AutonConstants {
-    public static double kBalanceP = 0.02;
-    public static double kBalanceI = 0;
-    public static double kBalanceD = 0;
   }
 }

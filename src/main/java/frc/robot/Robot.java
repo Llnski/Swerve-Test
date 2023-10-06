@@ -119,34 +119,34 @@ public class Robot extends TimedRobot {
       
     // command.schedule();
 
-    SequentialCommandGroup scoreCubeClimbAndExit = new SequentialCommandGroup(
-      // Score cube in the high goal
-      new SetArm(armSubSys, ScoringConstants.HIGH_CUBE_NODE_ARM_ANGLE)
-        .withTimeout(0.5),
-      Commands.run(()-> armSubsystem.setArmExtensionSpeed(Constants.AutonConstants.EXTENSION_SPEED_1),armSubsystem).withTimeout(0.5),
-      new SetExtender(armSubSys, ScoringConstants.HIGH_CUBE_NODE_EXTENDER_ROTATIONS)
-        .withTimeout(0.5),
-      new Lambda(() -> intake.set(-0.2))
-        .withTimeout(0.3)
-        .andThen(() -> intake.set(0)),
-      new SetExtender(armSubSys, 0)
-        .withTimeout(0.5),
-      new SetArm(armSubSys, 0)
-        .withTimeout(0.5),
+    // SequentialCommandGroup scoreCubeClimbAndExit = new SequentialCommandGroup(
+    //   // Score cube in the high goal
+    //   new SetArm(armSubSys, ScoringConstants.HIGH_CUBE_NODE_ARM_ANGLE)
+    //     .withTimeout(0.5),
+    //   Commands.run(()-> armSubsystem.setArmExtensionSpeed(Constants.AutonConstants.EXTENSION_SPEED_1),armSubsystem).withTimeout(0.5),
+    //   new SetExtender(armSubSys, ScoringConstants.HIGH_CUBE_NODE_EXTENDER_ROTATIONS)
+    //     .withTimeout(0.5),
+    //   new Lambda(() -> intake.set(-0.2))
+    //     .withTimeout(0.3)
+    //     .andThen(() -> intake.set(0)),
+    //   new SetExtender(armSubSys, 0)
+    //     .withTimeout(0.5),
+    //   new SetArm(armSubSys, 0)
+    //     .withTimeout(0.5),
 
-      // Move forward to charge station
-      new MoveDistance(-3.3, drive)
-        .withPitchExitThreshold(10)
-        .withTimeout(5),
+    //   // Move forward to charge station
+    //   new MoveDistance(-3.3, drive)
+    //     .withPitchExitThreshold(10)
+    //     .withTimeout(5),
       
-      // Then try to balance w/ remaining time
-      new Balance(drive)
-    ).andThen(() -> drive.holdPosition());
+    //   // Then try to balance w/ remaining time
+    //   new Balance(drive)
+    // ).andThen(() -> drive.holdPosition());
 
-    // auton = new Balance(drive).andThen(() -> drive.holdPosition());
-    // auton = climbAndExit;
-    auton = scoreCubeClimbAndExit;
-    auton.schedule();
+    // // auton = new Balance(drive).andThen(() -> drive.holdPosition());
+    // // auton = climbAndExit;
+    // auton = scoreCubeClimbAndExit;
+    // auton.schedule();
 
   }
 
