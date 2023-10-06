@@ -23,6 +23,17 @@ import frc.robot.util.Vector2;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  public static class AutonConstants{
+    public static final int EXTENSION_SPEED_1 = 1;
+    public static final int ROTATION_SPEED_1 = 1;
+    public static final int INTAKE_SPEED_1 = 1;
+    public static final int EXTENSION_SPEED_2 = 1;
+    public static final int ROTATION_SPEED_2 = 1;
+    public static final int INTAKE_SPEED_2 = 1;
+    public static final int DRIVE_ANGLE_1 = 1;
+    public static final int DRIVE_SPEED_1 = 1;
+    public static final int DRIVE_ROTATION_1 = 1;
+  }
   public static class CANIds {
     // Module 1 (Front-right)
     public static final int kMod1CANCoder = 10;
