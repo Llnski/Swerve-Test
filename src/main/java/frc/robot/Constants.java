@@ -24,9 +24,9 @@ import frc.robot.util.Vector2;
  */
 public final class Constants {
   public static class AutonConstants {
-    public static double kBalanceP = 0.02;
-    public static double kBalanceI = 0;
-    public static double kBalanceD = 0;
+    public static double kBalanceP = 0.02; //PID
+    public static double kBalanceI = 0; //PID
+    public static double kBalanceD = 0; //PID
 
     public static final int EXTENSION_SPEED_1 = 1;
     public static final int ROTATION_SPEED_1 = 1;
@@ -76,9 +76,9 @@ public final class Constants {
     public static final double kArmGearRatio = 1;
     public static final double kArmRotationsToDegrees = 1;
 
-    public static final double kArmP = 0.005;
-    public static final double kArmI = 0;
-    public static final double kArmD = 0;
+    public static final double kArmP = 0.005; //PID
+    public static final double kArmI = 0; //PID
+    public static final double kArmD = 0; //PID
 
     public static final double kIntakeSpeed = 0.7;
   }

@@ -53,10 +53,10 @@ public class Robot extends TimedRobot {
   private final ArmSubsystem armSubsystem = new ArmSubsystem();
 
   private final ShuffleboardTab tab = Shuffleboard.getTab("Swerve Test");
-  private final GenericEntry kBalanceP = tab.add("kBalanceP", AutonConstants.kBalanceP).getEntry();
-  private final GenericEntry kBalanceI = tab.add("kBalanceI", AutonConstants.kBalanceI).getEntry();
-  private final GenericEntry kBalanceD = tab.add("kBalanceD", AutonConstants.kBalanceD).getEntry();
-  private final GenericEntry kDriveP = tab.add("kDriveP", 0.1).getEntry();
+  private final GenericEntry kBalanceP = tab.add("kBalanceP", AutonConstants.kBalanceP).getEntry(); //PID
+  private final GenericEntry kBalanceI = tab.add("kBalanceI", AutonConstants.kBalanceI).getEntry(); //PID
+  private final GenericEntry kBalanceD = tab.add("kBalanceD", AutonConstants.kBalanceD).getEntry(); //PID
+  private final GenericEntry kDriveP = tab.add("kDriveP", 0.1).getEntry(); //PID - @Kai should these be values @Constants.java
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -84,9 +84,9 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
 
-    AutonConstants.kBalanceP = kBalanceP.getDouble(0.0);
-    AutonConstants.kBalanceI = kBalanceI.getDouble(0.0);
-    AutonConstants.kBalanceD = kBalanceD.getDouble(0.0);
+    AutonConstants.kBalanceP = kBalanceP.getDouble(0.0); //PID
+    AutonConstants.kBalanceI = kBalanceI.getDouble(0.0); //PID
+    AutonConstants.kBalanceD = kBalanceD.getDouble(0.0); //PID
 
     CommandScheduler.getInstance().run();
   }
@@ -208,7 +208,7 @@ public class Robot extends TimedRobot {
       // TODO: Either switch to something other than kP/weighted average
       // and/or characterize in terms of convergence time (i.e. how long from speed=0.5 to speed=1)
 
-      speedControlKp = kDriveP.getDouble(0);
+      speedControlKp = kDriveP.getDouble(0); //PID
 
       speed += speedControlKp * (inputSpeed - speed);
 

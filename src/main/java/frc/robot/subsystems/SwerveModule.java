@@ -33,7 +33,7 @@ public class SwerveModule extends SubsystemBase {
 
     private double lastDriveMotorEncoderPosition;
 
-    private PIDController pivotController = new PIDController(0.005, 0.0, 0.0);
+    private PIDController pivotController = new PIDController(0.005, 0.0, 0.0); //PID - @Kai should these be values @Constants.java
     private SparkMaxPIDController velocityController;
 
     public RelativeEncoder pivotEncoder, driveEncoder;
@@ -70,7 +70,7 @@ public class SwerveModule extends SubsystemBase {
         this.steeringMotor.restoreFactoryDefaults();
 
         this.velocityController = driveMotor.getPIDController();
-        this.velocityController.setP(0.00008);
+        this.velocityController.setP(0.00008); //PID
 
         this.pivotEncoder = steeringMotor.getEncoder();
         this.pivotEncoder.setPosition(0); // Zero position
